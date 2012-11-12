@@ -2,14 +2,41 @@ doctype 5
 html
     head
         title= pageTitle
+    body.impress-not-supported
+        #impress
+            .step.text-wrapper(data-x="-10000", data-y="-15000", data-rotate-x="-40", data-rotate-y="40", data-scale="10") 
+                p.text-content <strong id="fanfou-name">饭否</strong>
+                p.text-content 是一个微博客，也是国内最早的（未经考证）的微博平台。
+            .step.text-wrapper(data-x="0", data-y="-7500", data-scale="5") 
+                p.text-content 那里留着很多的回忆，
+                p.text-content 很多，很多……
+            .step.text-wrapper(data-x="-3000", data-y="-2500", data-z="-750", data-scale="10")
+                p.text-content 或许你也像我一样，
+                p.text-content 偶尔去翻翻自己的TL，想想哪些人，那些事……
+            .step.text-wrapper(data-x="6000", data-y="3000", data-z="-150", data-scale="5")
+                p.text-content 或许你也像我一样，
+                p.text-content 被自己说过的话，做过的事感动的虚实不分，无法自拔……
+            .step.text-wrapper(data-x="5000", data-y="4500")
+                p.text-content 或许你也像我一样，
+                p.text-content 想把自己的回忆永远的留存下来，以免饭否又被拔网线……
+            .step.text-wrapper(data-x="10000", data-y="8000", data-z="-100")
+                p.text-content 或许你也像我一样，
+                p.text-content 需要这个应用帮点小忙……
+            .step.text-wrapper(data-x="6500", data-y="6500", data-scale="20", data-z="-150")
+                p.text-content 试试呗 :)
+                p.text-content 去饭否<button>授权</button>
+        
+
         link(rel="stylesheet", href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.0/themes/humanity/jquery-ui.css")
-        script(src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js")
-        script(src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js")
+        script(src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js")
+        script(src="http://ajax.aspnetcdn.com/ajax/jquery.ui/1.9.0/jquery-ui.min.js")
+        script(src="js/impress.js")
+        link(rel="stylesheet", href="css/index.css")
         script
-          $(function(){
-              $("#button").button();
-              });
-    body
-        a(href="/do_oauth")
-            button(id="button") OAuth
+            $("button")
+                .button()
+                .click(function(){
+                    window.location.href="/do_oauth";
+                });
+            impress().init();
 

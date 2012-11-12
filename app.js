@@ -12,17 +12,21 @@ app.configure('development', function(){
         "port":6379,
         "password":"",
         "name":""
-    }
+    };
+    callback_url = "127.0.0.1:3000";
 });
 // Setting environment for production online
 app.configure('production', function(){
     var env = JSON.parse(process.env.VCAP_SERVICES);
     redisdb = env['redis-2.2'][0]['credentials'];
+    callback_url = "fflog.ap01.aws.af.cm";
 });
-
+// Setting static middleware
 app.use(express.static(__dirname+"/static"));
+// Setting cookie signed key
 app.use(express.cookieParser("godintheheaven"));
 
+// Now are path handler
 app.get("/", function(req, res){
     res.render(__dirname+"/template/index.jade", {"pageTitle":"index"});
 });
@@ -33,6 +37,8 @@ app.get("/do_oauth", function(req, res){
             var client = redis.createClient(redisdb["port"], redisdb["host"]);
             client.on("error", function(err){
                 util.puts("Redis error" + err);
+                res.redirect("/404");
+                client.quit();
                 //TODO
                 res.end();
             });
@@ -49,13 +55,18 @@ app.get("/do_oauth", function(req, res){
                                         "HMAC-SHA1"
                                         );
                     oa.getOAuthRequestToken(function(error, oauth_token, oauth_token_secret, results){
-                        if(error) 
+                        if(error) {
                             util.puts('Get oauth token error :' + error);
+                            client.quit();
+                            //res.send("Sorry, something is wrong, please mailto sqbing#gmail.com.");
+                            res.redirect("/404");
+                            res.end();
+                        }
                         else { 
                             util.puts('oauth_token :' + oauth_token);
                             util.puts('oauth_token_secret :' + oauth_token_secret);
                             // Save oauth_token&oauth_token_secret to db.
-                            var client = redis.createClient(redisdb["port"], redisdb["host"]);
+                            //var client = redis.createClient(redisdb["port"], redisdb["host"]);
                             client.on("error", function (err) {
                                 console.log("Redis error " + err);
                                 // TODO
@@ -64,14 +75,15 @@ app.get("/do_oauth", function(req, res){
                             client.hset("oauth", oauth_token, oauth_token_secret, redis.print);
                             client.quit();
                             // Open oauth url
-                            res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback=127.0.0.1:3000/oauth_callback");
+                            res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+callback_url+"/oauth_callback");
                             res.end();
                         }
                     });
                 }
                 else{
                     // TODO userID found, show fanfou log
-                    res.send("Authed");
+                    //res.send("Authed");
+                    res.redirect("/show_log");
                     client.quit();
                     res.end();
                 }
@@ -88,8 +100,11 @@ app.get("/do_oauth", function(req, res){
                             "HMAC-SHA1"
                             );
             oa.getOAuthRequestToken(function(error, oauth_token, oauth_token_secret, results){
-                if(error) 
+                if(error){ 
                     util.puts('Get oauth token error :' + error);
+                    res.redirect("/404");
+                    res.end();
+                }
                 else { 
                     util.puts('oauth_token :' + oauth_token);
                     util.puts('oauth_token_secret :' + oauth_token_secret);
@@ -97,13 +112,16 @@ app.get("/do_oauth", function(req, res){
                     var client = redis.createClient(redisdb["port"], redisdb["host"]);
                     client.on("error", function (err) {
                         console.log("Redis error " + err);
+                        res.redirect("/404");
+                        client.quit();
                         // TODO
                         res.end();
                     });
                     client.hset("oauth", oauth_token, oauth_token_secret, redis.print);
                     client.quit();
                     // Open oauth url
-                    res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback=127.0.0.1:3000/oauth_callback");
+                    res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+callback_url+"/oauth_callback");
+                    client.quit();
                     res.end();
                 }
             });
@@ -121,8 +139,11 @@ app.get("/do_oauth", function(req, res){
                             "HMAC-SHA1"
                             );
         oa.getOAuthRequestToken(function(error, oauth_token, oauth_token_secret, results){
-            if(error) 
+            if(error) {
                 util.puts('Get oauth token error :' + error);
+                res.redirect("/404");
+                res.end();
+            }
             else { 
                 util.puts('oauth_token :' + oauth_token);
                 util.puts('oauth_token_secret :' + oauth_token_secret);
@@ -130,13 +151,15 @@ app.get("/do_oauth", function(req, res){
                 var client = redis.createClient(redisdb["port"], redisdb["host"]);
                 client.on("error", function (err) {
                     console.log("Redis error " + err);
+                    res.redirect("/404");
                     // TODO
                     res.end();
+                    client.quit();
                 });
                 client.hset("oauth", oauth_token, oauth_token_secret, redis.print);
                 client.quit();
                 // Open oauth url
-                res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback=127.0.0.1:3000/oauth_callback");
+                res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback=fflog.ap01.aws.af.cm:3000/oauth_callback");
                 res.end();
             }
         });
@@ -147,21 +170,23 @@ app.get("/oauth_callback", function(req, res){
     var oauth_token = req.query.oauth_token;
     if(oauth_token == undefined){
         util.puts("Input params error, oauth_token:" + oauth_token);
-        res.send("Are you kidding me?");
+        //res.send("Are you kidding me?");
+        res.redirect("/404");
         res.end();
     }
     else{
         var client = redis.createClient(redisdb["port"], redisdb["host"]);
         client.on("error", function(err){
             util.puts("Redis error" + err);
-            //TODO
+            res.redirect("/404");
             res.end();
         });
         client.hget("oauth", oauth_token, function (err, reply) {
             if(err){
                 util.puts("oauth_token not found");
-                client.end();
-                res.send(oauth_token+" not authed");
+                client.quit();
+                //res.send(oauth_token+" not authed");
+                res.redirect("/do_oauth");
                 res.end();
             }
             else{
@@ -176,8 +201,9 @@ app.get("/oauth_callback", function(req, res){
                 oa.getOAuthAccessToken(oauth_token, reply, function(error, oauth_access_token, oauth_access_token_secret, results2){
                     if(error){
                         util.puts("Get access token error"+error);
-                        client.end();
-                        res.send("Failed to get oauth access token.");
+                        client.quit();
+                        //res.send("Failed to get oauth access token.");
+                        res.redirect("/404");
                         res.end();
                     }
                     else{
@@ -189,71 +215,26 @@ app.get("/oauth_callback", function(req, res){
                         //client.hmset("users", "userID", userID, "oauth_access_token", oauth_access_token, "oauth_access_token_secret", oauth_access_token_secret, redis.print);
                         client.hset("users", userID, oauth_access_token, redis.print);
                         client.hset("access_token", oauth_access_token, oauth_access_token_secret, redis.print);
-                        client.end();
-                        res.send("Authed.");
+                        client.quit();
+                        //res.send("Authed.");
+                        res.redirect("/show_log");
                         res.end();
                     }
                 });
             }
-            /*
-            replies.forEach(function(reply, i){
-                if(reply["oauth_token"] != oauth_token){
-                    return;
-                }
-                else{
-                    got_auth_token = 1;
-                    //TODO Now try to fetch access token&secret, then get user info, and store in db.
-                    var oa = new OAuth( "http://fanfou.com/oauth/request_token",
-                        "http://fanfou.com/oauth/access_token",
-                        "60648e4719285ec6fb437785e655bda5",
-                        "aed509928807eab4f1a615e4d422c724",
-                        "1.0",
-                        null,
-                        "HMAC-SHA1");
-                    oa.getOAuthAccessToken(reply["oauth_token"], reply["oauth_token_secret"], function(error, oauth_access_token, oauth_access_token_secret, results2){
-                        if(error){
-                            util.puts("Get access token error"+error);
-                        }
-                        else{
-                            util.puts("oauth_access_token"+oauth_access_token);
-                            util.puts("oauth_access_token_secret"+oauth_access_token_secret);
-                            var userID = require("blueimp-md5").md5(oauth_access_token+oauth_access_token_secret);
-                            res.cookie("userID", userID, {signed: true, maxAge: 900000});
-                            client.hmset("users", "userID", userID, "oauth_access_token", oauth_access_token, "oauth_access_token_secret", oauth_access_token_secret, redis.print);
-                        }
-                    });
-
-                }
-            });
-            */
         });
-        /*
-        client.end();
-        res.send("Authed");
-        res.end();
-        */
     }
 
 });
-app.get("/get_all_oauth_token", function(req, res){
-    var client = redis.createClient(redisdb["port"], redisdb["host"]);
-    client.on("error", function(err){
-        util.puts("Redis error" + err);
-        //TODO
-        res.end();
-    });
-    client.hkeys("oauth", function(error, replies){
-        if(error){
-        }
-        else{
-            replies.forEach(function(reply, i){
-                res.send("oauth_token: "+reply.oauth_token+" oauth_token_secret: "+reply.oauth_token_secret);
-            })
-            res.end();
-            client.end();
-        }
-    });
-    //client.end();
+
+app.get("/show_log", function(req, res){
+    res.send("Coming very soon.");
+    res.end();
+});
+app.get("/404", function(req, res){
+    res.send("Page not found.");
+    res.end();
 });
 
+// Now let's rock
 app.listen(process.env.VCAP_APP_PORT || 3000);
