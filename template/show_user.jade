@@ -1,0 +1,51 @@
+doctype 5
+html
+    head
+        title= name
+    body(background= profile_background_image_url)
+        #main
+            #left-side
+                #user-image
+                    img(src= profile_image_url)
+            #right-side
+                #user-name
+                    p 
+                        span 你好，
+                        span.bold-text= name
+                        span ！
+                #user-followers-count
+                    p
+                        span.fanfou-blue 关注我的人：
+                        span.bold-text= followers_count
+                #user-friends-count
+                    p
+                        span.fanfou-blue 我关注的人：
+                        span.bold-text= friends_count
+                #user-statuses-count
+                    p
+                        span.fanfou-blue 消息：
+                        span.bold-text= statuses_count
+            .clear
+            #footer-buttons
+                span 我饭否的早起（http://fanfou.com/sqbing），可以帮你把以前发的消息保存到电脑上，
+                button#button-output-pdf
+                    span 生成PDF
+                span 或者
+                button#button-output-html
+                    span 生成网页(HTML)
+                span 都可以。
+        link(rel="stylesheet", href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.0/themes/humanity/jquery-ui.css")
+        script(src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.8.2.min.js")
+        script(src="http://ajax.aspnetcdn.com/ajax/jquery.ui/1.9.0/jquery-ui.min.js")
+        link(rel="stylesheet", href="css/show_user.css")
+        script
+            $("#button-output-pdf")
+                    .button()
+                    .click(function(){
+                        window.location.href="/show_log?type=pdf";
+                    });
+            $("#button-output-html")
+                    .button()
+                    .click(function(){
+                        window.location.href="/show_log?type=html";
+                    });
