@@ -43,8 +43,8 @@ app.get("/do_oauth", function(req, res){
                     util.puts("Cookie found, user not logged in yet.");
                     var oa = new OAuth( "http://fanfou.com/oauth/request_token",
                                         "http://fanfou.com/oauth/access_token",
-                                        "60648e4719285ec6fb437785e655bda5",
-                                        "aed509928807eab4f1a615e4d422c724",
+                                        process.env.CUSTOMER_KEY,
+                                        process.env.CUSTOMER_SECRET,
                                         "1.0",
                                         null,
                                         "HMAC-SHA1"
@@ -80,8 +80,8 @@ app.get("/do_oauth", function(req, res){
             util.puts("User cookie not set yet.");
             var oa = new OAuth( "http://fanfou.com/oauth/request_token",
                             "http://fanfou.com/oauth/access_token",
-                            "60648e4719285ec6fb437785e655bda5",
-                            "aed509928807eab4f1a615e4d422c724",
+                            process.env.CUSTOMER_KEY,
+                            process.env.CUSTOMER_SECRET,
                             "1.0",
                             null,
                             "HMAC-SHA1"
@@ -112,8 +112,8 @@ app.get("/do_oauth", function(req, res){
         util.puts("Signed cookie not set.");
         var oa = new OAuth( "http://fanfou.com/oauth/request_token",
                             "http://fanfou.com/oauth/access_token",
-                            "60648e4719285ec6fb437785e655bda5",
-                            "aed509928807eab4f1a615e4d422c724",
+                            process.env.CUSTOMER_KEY,
+                            process.env.CUSTOMER_SECRET,
                             "1.0",
                             null,
                             "HMAC-SHA1"
@@ -156,8 +156,8 @@ app.get("/oauth_callback", function(req, res){
             else{
                 var oa = new OAuth( "http://fanfou.com/oauth/request_token",
                     "http://fanfou.com/oauth/access_token",
-                    "60648e4719285ec6fb437785e655bda5",
-                    "aed509928807eab4f1a615e4d422c724",
+                    process.env.CUSTOMER_KEY,
+                    process.env.CUSTOMER_SECRET,
                     "1.0",
                     null,
                     "HMAC-SHA1");
@@ -204,8 +204,8 @@ app.get("/show_log", function(req, res){
                 {
                     var oa = new OAuth( "http://fanfou.com/oauth/request_token",
                         "http://fanfou.com/oauth/access_token",
-                        "60648e4719285ec6fb437785e655bda5",
-                        "aed509928807eab4f1a615e4d422c724",
+                        process.env.CUSTOMER_KEY,
+                        process.env.CUSTOMER_SECRET,
                         "1.0",
                         null,
                         "HMAC-SHA1");
@@ -284,8 +284,8 @@ app.get("/show_user", function(req, res){
                 else{
                     var oa = new OAuth( "http://fanfou.com/oauth/request_token",
                         "http://fanfou.com/oauth/access_token",
-                        "60648e4719285ec6fb437785e655bda5",
-                        "aed509928807eab4f1a615e4d422c724",
+                        process.env.CUSTOMER_KEY,
+                        process.env.CUSTOMER_SECRET,
                         "1.0",
                         null,
                         "HMAC-SHA1");
