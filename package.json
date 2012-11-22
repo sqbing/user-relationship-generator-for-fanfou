@@ -2,10 +2,10 @@
     "name":"fflog",
     "version":"0.0.1",
     "dependencies":{
-        "express":"",
-        "jade":"",
-        "oauth":"",
-        "redis":"",
-        "blueimp-md5":""
+        "express":"*",
+        "jade":"*",
+        "oauth":"*",
+        "redis":"*",
+        "blueimp-md5":"*"
     }
 }
