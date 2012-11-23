@@ -2,9 +2,8 @@ var express = require("express");
 var util = require("util");
 var OAuth = require("oauth").OAuth;
 var redis = require("redis");
-var app = express();
 var md5 = require("blueimp-md5").md5;
-
+var app = express();
 // Global variables
 var redisdb = {};
 var oauth_callback_url = "";
@@ -31,6 +30,17 @@ app.configure('production', function(){
     oauth_callback_url = "fflog.ap01.aws.af.cm";
 });
 
+app.configure('heroku', function(){
+    var rtg   = require("url").parse(process.env.REDISTOGO_URL);
+    redisdb = {
+        "hostname":rtg.hostname,
+        "port":rtg.port,
+        "password":rtg.auth.split(":")[1]
+    };
+    node_port = process.env.PORT;
+    oauth_callback_url = "fflog.herokuapp.com";
+});
+
 app.use(express.logger());
 // Setting static middleware
 app.use(express.static(__dirname+"/static"));
@@ -43,7 +53,6 @@ app.get("/", function(req, res){
     res.render(__dirname+"/template/index.jade", {"pageTitle":"index"});
 });
 app.get("/do_oauth", function(req, res){
-    //FIXME
     if(req.signedCookies){
         if(req.signedCookies.user_cookie){
             util.puts("user_cookie: "+req.signedCookies.user_cookie);
@@ -397,6 +406,10 @@ var client = redis.createClient(redisdb["port"], redisdb["hostname"]);
 client.on("error", function(err){
     util.puts("Redis error" + err);
 });
+if(redisdb.password)
+{
+    client.auth(redisdb.password);    
+}
 
 // Now let's rock
 app.listen(node_port);
