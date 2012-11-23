@@ -273,6 +273,66 @@ app.get("/show_log", function(req, res){
         res.end();
     }
 });
+
+app.get("/show_log_test", function(req, res){
+    if(req.signedCookies)
+    {
+        if(req.signedCookies.user_cookie)
+        {
+            client.hgetall("cookies:"+req.signedCookies.user_cookie, function(error, reply){
+                if(error || reply == null){
+                    res.redirect("/do_oauth");
+                    res.end();
+                }
+                else
+                {
+                    var oa = new OAuth( "http://fanfou.com/oauth/request_token",
+                        "http://fanfou.com/oauth/access_token",
+                        process.env.CUSTOMER_KEY,
+                        process.env.CUSTOMER_SECRET,
+                        "1.0",
+                        null,
+                        "HMAC-SHA1");
+                    var page = req.query.page;
+                    var url = "http://api.fanfou.com/statuses/user_timeline.json";
+                    var all_status = [];
+                    if(page){
+                        url = url + "?page=" + page;
+                    }
+                    else{
+                        page = 1;
+                    }
+                    oa.getProtectedResource(url, 
+                        "GET", 
+                        reply.oauth_access_token, 
+                        reply.oauth_access_token_secret,  
+                        function(error, data, response){
+                            if(error){
+                                util.puts("Error while fetch user log.");
+                                res.redirect("/404");
+                                res.end();
+                            }
+                            else{
+                                util.puts(JSON.stringify(data));
+                                res.render(__dirname+"/template/show_log.jade", {data: JSON.parse(data)});
+                                res.end();
+                            }
+                    });
+                }
+            });
+        }
+        else
+        {
+            res.redirect("/do_oauth");
+            res.end();            
+        }
+    }
+    else
+    {
+        res.redirect("/do_oauth");
+        res.end();
+    }
+});
 app.get("/show_user", function(req, res){
     if(req.signedCookies){
         if(req.signedCookies.user_cookie){
