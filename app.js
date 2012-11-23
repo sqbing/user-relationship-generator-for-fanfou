@@ -5,6 +5,11 @@ var redis = require("redis");
 var app = express();
 var md5 = require("blueimp-md5").md5;
 
+// Global variables
+var redisdb = {};
+var oauth_callback_url = "";
+var node_port = 0;
+
 // Setting environment for local development
 app.configure('development', function(){
     redisdb = {
@@ -14,14 +19,18 @@ app.configure('development', function(){
         "password":"",
         "name":""
     };
-    callback_url = "127.0.0.1:3000";
+    node_port = 3000;
+    oauth_callback_url = "127.0.0.1:"+node_port;
 });
+
 // Setting environment for production online
 app.configure('production', function(){
     var env = JSON.parse(process.env.VCAP_SERVICES);
     redisdb = env['redis-2.2'][0]['credentials'];
-    callback_url = "fflog.ap01.aws.af.cm";
+    node_port = process.env.VCAP_APP_PORT;
+    oauth_callback_url = "fflog.ap01.aws.af.cm";
 });
+
 // Setting static middleware
 app.use(express.static(__dirname+"/static"));
 // Setting cookie signed key
@@ -63,7 +72,7 @@ app.get("/do_oauth", function(req, res){
                             client.hmset("oauth_token:"+oauth_token, "oauth_token", oauth_token, "oauth_token_secret",oauth_token_secret, redis.print);
                             
                             // Open oauth url
-                            res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+callback_url+"/oauth_callback");
+                            res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+oauth_callback_url+"/oauth_callback");
                             res.end();
                         }
                     });
@@ -100,7 +109,7 @@ app.get("/do_oauth", function(req, res){
                     client.hmset("oauth_token:"+oauth_token, "oauth_token", oauth_token, "oauth_token_secret", oauth_token_secret, redis.print);
 
                     // Open oauth url
-                    res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+callback_url+"/oauth_callback");
+                    res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+oauth_callback_url+"/oauth_callback");
 
                     res.end();
                 }
@@ -132,7 +141,7 @@ app.get("/do_oauth", function(req, res){
                 client.hmset("oauth_token:"+oauth_token, "oauth_token", oauth_token, "oauth_token_secret", oauth_token_secret, redis.print);
 
                 // Open oauth url
-                res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+callback_url+"/oauth_callback");
+                res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+oauth_callback_url+"/oauth_callback");
                 res.end();
             }
         });
@@ -382,11 +391,11 @@ app.get("/404", function(req, res){
 });
 
 // Without redis, nothing can we do.
-var client = redis.createClient(redisdb["port"], redisdb["host"]);
+var client = redis.createClient(redisdb["port"], redisdb["hostname"]);
 // TODO Do something if redis error ocurrs.
 client.on("error", function(err){
     util.puts("Redis error" + err);
 });
 
 // Now let's rock
-app.listen(process.env.VCAP_APP_PORT || 3000);
+app.listen(node_port);
