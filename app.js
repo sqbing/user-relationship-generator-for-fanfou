@@ -31,6 +31,7 @@ app.configure('production', function(){
     oauth_callback_url = "fflog.ap01.aws.af.cm";
 });
 
+app.use(express.logger());
 // Setting static middleware
 app.use(express.static(__dirname+"/static"));
 // Setting cookie signed key
