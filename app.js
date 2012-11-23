@@ -141,7 +141,7 @@ app.get("/do_oauth", function(req, res){
 });
 app.get("/oauth_callback", function(req, res){
     var oauth_token = req.query.oauth_token;
-    if(oauth_token == undefined){
+    if(oauth_token === undefined){
         util.puts("Input params error, oauth_token: undefined");
         res.redirect("/404");
         res.end();
@@ -196,7 +196,7 @@ app.get("/show_log", function(req, res){
         if(req.signedCookies.user_cookie)
         {
             client.hgetall("cookies:"+req.signedCookies.user_cookie, function(error, reply){
-                if(error || reply == null){
+                if(error || reply === null){
                     res.redirect("/do_oauth");
                     res.end();
                 }
@@ -225,7 +225,7 @@ app.get("/show_log", function(req, res){
                             res.end();
                         }
                         else{
-                            if(eval(data).length == 0)
+                            if(JSON.parse(data).length === 0)
                             {
                                 util.puts(JSON.stringify(all_status));
                                 //res.send("Invalid page num:"+page);
@@ -238,9 +238,9 @@ app.get("/show_log", function(req, res){
                                 url = "http://api.fanfou.com/statuses/user_timeline.json?page="+page;                
                                 //util.puts(JSON.stringify(data));
                                 //all_status.push(data);
-                                for(var i=0; i<eval(data).length; i++)
+                                for(var i=0; i<JSON.parse(data).length; i++)
                                 {
-                                    all_status.push(eval(data)[i]);                                    
+                                    all_status.push(JSON.parse(data)[i]);                                    
                                 }
                                 //res.render(__dirname+"/template/show_log.jade", {data: JSON.parse(data)});
                                 //res.end();   
