@@ -158,6 +158,8 @@ app.get("/do_oauth", function(req, res){
     }
 
 });
+
+// 饭否认证回调
 app.get("/oauth_callback", function(req, res){
     var oauth_token = req.query.oauth_token;
     if(oauth_token === undefined){
@@ -199,8 +201,47 @@ app.get("/oauth_callback", function(req, res){
                         client.hmset("cookies:"+user_cookie, "oauth_access_token", oauth_access_token, "oauth_access_token_secret", oauth_access_token_secret, redis.print);
                         client.del("oauth_token:"+oauth_token, redis.print);
 
-                        res.redirect("/show_user");
-                        res.end();
+                        // 获取用户信息
+                        oa.getProtectedResource("http://api.fanfou.com/users/show.json", 
+                            "GET", 
+                            oauth_access_token, 
+                            oauth_access_token_secret,  
+                            function (error, data, response) {
+                                if(error){
+                                    util.puts("Failed to get user info.");
+                                    util.puts("Data: "+data);
+                                    util.puts("Error: "+error);
+                                    util.puts("Response: "+response);
+                                    res.redirect("/404");
+                                    res.end();
+                                }
+                                else{
+                                    if(JSON.parse(data).length != 0){
+                                        // Succeeded to get user info.
+                                        util.puts(data);
+                                        if(JSON.parse(data).id)
+                                        {
+                                            // Save user info
+                                            client.hmset("user:"+JSON.parse(data).id, "info", data, redis.print);
+                                            client.hmset("cookies:"+user_cookie, "id", JSON.parse(data).id, redis.print);
+
+                                            res.redirect("/show_user");
+                                            res.end();   
+                                        }
+                                        else
+                                        {
+                                            res.send("Failed to save user info.");
+                                            res.end();
+                                        }
+                                         
+                                    }
+                                    else{
+                                        util.puts("Failed to get user info.");
+                                        res.redirect("/404");
+                                        res.end();
+                                    }
+                                }
+                        });
                     }
                 });
             }
@@ -209,7 +250,8 @@ app.get("/oauth_callback", function(req, res){
 
 });
 
-app.get("/show_log", function(req, res){
+// 保存用户消息到redis
+app.get("/save_all_log", function(req, res){
     if(req.signedCookies)
     {
         if(req.signedCookies.user_cookie)
@@ -228,41 +270,54 @@ app.get("/show_log", function(req, res){
                         "1.0",
                         null,
                         "HMAC-SHA1");
-                    var page = req.query.page;
                     var url = "http://api.fanfou.com/statuses/user_timeline.json";
                     var all_status = [];
-                    if(page){
-                        url = url + "?page=" + page;
+                    var page = 1;
+                    if(reply.id === undefined)
+                    {
+                        res.redirect("/404");
+                        res.end();
                     }
-                    else{
-                        page = 1;
-                    }
+
+                    // 删除原来的消息列表
+                    client.del("message:"+reply.id, redis.print);
+
                     var callback_func_get_status = function(error, data, response){
                         if(error){
                             util.puts("Error while fetch user log.");
+                            util.puts("Data: "+data);
+                            util.puts("Error: "+error);
+                            util.puts("Response: "+response);
                             res.redirect("/404");
                             res.end();
                         }
                         else{
                             if(JSON.parse(data).length === 0)
                             {
-                                util.puts(JSON.stringify(all_status));
-                                //res.send("Invalid page num:"+page);
-                                res.render(__dirname+"/template/show_log.jade", {data: all_status});
-                                res.end();                                    
+                                client.llen("message:"+reply.id, function(err, list_length){
+                                    if(err)
+                                    {
+                                        util.puts("Failed to get message list length.");
+                                        res.redirect("/404");
+                                        res.end();
+                                    }else{
+                                        res.send("Succeded to get "+list_length+" messages.");
+                                        res.end();
+                                    }
+                                });                            
                             }
                             else
-                            {          
-                                page++;
-                                url = "http://api.fanfou.com/statuses/user_timeline.json?page="+page;                
-                                //util.puts(JSON.stringify(data));
-                                //all_status.push(data);
+                            {
                                 for(var i=0; i<JSON.parse(data).length; i++)
                                 {
-                                    all_status.push(JSON.parse(data)[i]);                                    
+                                    // 保存消息到list
+                                    client.rpush("message:"+reply.id, JSON.parse(data)[i], redis.print);                                    
                                 }
-                                //res.render(__dirname+"/template/show_log.jade", {data: JSON.parse(data)});
-                                //res.end();   
+                                util.puts("Page "+page+", "+JSON.parse(data).length+"messages saved.");
+                                
+                                // 继续获取下一页用户消息
+                                page++;
+                                url = "http://api.fanfou.com/statuses/user_timeline.json?page="+page;  
                                 oa.getProtectedResource(url, 
                                     "GET", 
                                     reply.oauth_access_token, 
@@ -282,76 +337,20 @@ app.get("/show_log", function(req, res){
         }
         else
         {
+            // 若用户未认证
             res.redirect("/do_oauth");
             res.end();            
         }
     }
     else
     {
+        // 若用户未认证
         res.redirect("/do_oauth");
         res.end();
     }
 });
 
-app.get("/show_log_test", function(req, res){
-    if(req.signedCookies)
-    {
-        if(req.signedCookies.user_cookie)
-        {
-            client.hgetall("cookies:"+req.signedCookies.user_cookie, function(error, reply){
-                if(error || reply == null){
-                    res.redirect("/do_oauth");
-                    res.end();
-                }
-                else
-                {
-                    var oa = new OAuth( "http://fanfou.com/oauth/request_token",
-                        "http://fanfou.com/oauth/access_token",
-                        process.env.CUSTOMER_KEY,
-                        process.env.CUSTOMER_SECRET,
-                        "1.0",
-                        null,
-                        "HMAC-SHA1");
-                    var page = req.query.page;
-                    var url = "http://api.fanfou.com/statuses/user_timeline.json";
-                    var all_status = [];
-                    if(page){
-                        url = url + "?page=" + page;
-                    }
-                    else{
-                        page = 1;
-                    }
-                    oa.getProtectedResource(url, 
-                        "GET", 
-                        reply.oauth_access_token, 
-                        reply.oauth_access_token_secret,  
-                        function(error, data, response){
-                            if(error){
-                                util.puts("Error while fetch user log.");
-                                res.redirect("/404");
-                                res.end();
-                            }
-                            else{
-                                util.puts(JSON.stringify(data));
-                                res.render(__dirname+"/template/show_log.jade", {data: JSON.parse(data)});
-                                res.end();
-                            }
-                    });
-                }
-            });
-        }
-        else
-        {
-            res.redirect("/do_oauth");
-            res.end();            
-        }
-    }
-    else
-    {
-        res.redirect("/do_oauth");
-        res.end();
-    }
-});
+// 显示用户信息
 app.get("/show_user", function(req, res){
     if(req.signedCookies){
         if(req.signedCookies.user_cookie){
@@ -368,28 +367,34 @@ app.get("/show_user", function(req, res){
                         "1.0",
                         null,
                         "HMAC-SHA1");
-                    oa.getProtectedResource("http://api.fanfou.com/users/show.json", "GET", reply.oauth_access_token, reply.oauth_access_token_secret,  function (error, data, response) {
-                    if(error){
-                        util.puts("Failed to get user info.");
-                        res.redirect("/404");
-                        res.end();
-                    }
-                    else{
-                        // Succeeded to get user info, now show welcome.
-                        util.puts(data);
-                        res.render(__dirname+"/template/show_user.jade", JSON.parse(data));
-                        res.end();
-                    }
-                    });
+                    oa.getProtectedResource("http://api.fanfou.com/users/show.json", 
+                        "GET", 
+                        reply.oauth_access_token, 
+                        reply.oauth_access_token_secret,  
+                        function (error, data, response) {
+                            if(error){
+                                util.puts("Failed to get user info.");
+                                res.redirect("/404");
+                                res.end();
+                            }
+                            else{
+                                // Succeeded to get user info, now show welcome.
+                                util.puts(data);
+                                res.render(__dirname+"/template/show_user.jade", JSON.parse(data));
+                                res.end();
+                            }
+                        });
                 }
             });
         }
         else{
+            // 用户未认证
             res.redirect("/do_oauth");
             res.end();
         }
     }
     else{
+        // 用户未认证
         res.redirect("/do_oauth");
         res.end();
     }
@@ -411,5 +416,5 @@ if(redisdb.password)
     client.auth(redisdb.password);    
 }
 
-// Now let's rock
+// Now let's rock!
 app.listen(node_port);
