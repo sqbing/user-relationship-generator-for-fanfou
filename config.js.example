@@ -1,0 +1,10 @@
+module.exports = {
+    "author":"sqbing",
+    "contact":"sqbing@gmail.com",
+    "server_domain":"127.0.0.1",
+    "server_port":"3000",
+
+    "customer_key":"",
+    "customer_secret":"",
+    "session_secret":""
+};
