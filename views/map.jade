@@ -1,0 +1,84 @@
+!!! 5
+html
+    head
+        include scriptsandcsses
+        script(src="/javascripts/raphael.js")
+        script(src="/javascripts/graffle.js")
+        link(rel='stylesheet', href='/stylesheets/map.css')
+        script
+            $(document).ready(function(){
+                // Show progress bar and fetch user following and followed information.
+                $("#fetching-modal").modal("show");
+                $.ajax("/user/fetch_map").complete(function(xhr){
+                    if(xhr.statusText == "OK" && xhr.responseText){
+                        $("#fetching-modal").modal("hide");
+                        var responseJSON = JSON.parse(xhr.responseText);
+                        if(responseJSON == null
+                        || responseJSON.following == null
+                        || responseJSON.followed == null
+                        || responseJSON.me == null){
+                            $("#fetching-modal").modal("hide");
+                            $("body").append("<p>Error! Refresh to try again.</p>");
+                            return;   
+                        }
+                        else{
+                            var following = responseJSON.following;
+                            var followed = responseJSON.followed;
+                            var me = responseJSON.me;
+                            // Succeeded to get user following and followed information.
+                            var user_list = {};
+                            user_list[me.id] = {};
+                            user_list[me.id]["user_info"] = me;
+                            user_list[me.id]["following"] = {};
+                            for(var i in following){
+                                var following_user_info = following[i];
+                                if(user_list[following_user_info.id] == null){
+                                    // 若该关注用户未在用户列表中，则为该用户创建一条记录
+                                    user_list[following_user_info.id] = {};
+                                    user_list[following_user_info.id]["user_info"] = following_user_info;
+                                    user_list[following_user_info.id]["following"] = {};
+                                }
+                                user_list[me.id]["following"][following_user_info.id] = following_user_info;
+                            }
+                            for(var i in followed){
+                                var followed_user_info = followed[i];
+                                if(user_list[followed_user_info.id] == null){
+                                    // 若该被关注用户未在用户列表中，则为该用户创建一条记录
+                                    user_list[followed_user_info.id] = {};
+                                    user_list[followed_user_info.id]["user_info"] = followed_user_info;
+                                    user_list[followed_user_info.id]["following"] = {};
+                                }
+                                user_list[followed_user_info.id].following[me.id] = me;
+                            }
+                            // Create img to hold user icons
+                            for(var id in user_list){
+                                var user_img_url = user_list[id].user_info.profile_image_url;
+                                $("#map-img-holder").append("<img id='user-"+id+"' src='"+user_img_url+"' class='user-img'></img>");
+                            }
+                            
+                            console.log("Paper width:"+$("#map-svg-holder").width()+" height:"+$("#map-svg-holder").height());
+                            // 创建新的画布
+                            var paper = new Raphael("map-svg-holder", $("#map-svg-holder").width(), $("#map-svg-holder").height());
+                            // Generate svg map with raphael
+                            draw_raphael(paper, user_list);
+                            return;
+                        }
+                    }
+                    else{
+                        $("#fetching-modal").modal("hide");
+                        $("body").append("<p>Error! Refresh to try again.</p>");
+                        return;
+                    }
+                });
+            });
+    body
+        include header
+        .container-fluid
+            .row-fluid
+                .span12
+                    #map-img-holder
+                    #map-svg-holder
+        #fetching-modal.well.modal.fade
+            h1.text-center#fetching-modal-text Fetching user information to generate map...
+            .progress.progress-striped.active
+                #fetching-modal-progress.bar(style="width:100%")

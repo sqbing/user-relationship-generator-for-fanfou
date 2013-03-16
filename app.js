@@ -15,7 +15,7 @@ app.configure(function(){
   app.set('port', config.server_port || 3000);
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
-  app.use(express.favicon());
+  app.use(express.favicon(__dirname+"/public/images/favicon.ico"));
   app.use(express.logger('dev'));
   app.use(express.bodyParser());
   app.use(express.methodOverride());
@@ -29,6 +29,8 @@ app.configure(function(){
         req.global_config = config;
         res.locals.csrf = req.session?req.session._csrf:"";
         res.locals.session = req.session;
+        res.locals.author = config.author;
+        res.locals.contact = config.contact;
         next();
     });
   app.use(app.router);

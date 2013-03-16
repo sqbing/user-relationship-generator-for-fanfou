@@ -4,6 +4,6 @@
  */
 
 module.exports = function(req, res){
-  console.log(res.locals.session);
-  res.render('index', { title: 'Express' });
+  //console.log(res.locals.session);
+  res.render('index', { title: 'Express'});
 };

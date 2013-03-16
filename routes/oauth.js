@@ -12,7 +12,14 @@ exports.do_oauth = function(req, res, next){
     oa.getOAuthRequestToken(function(error, oauth_token, oauth_token_secret, results){
         if(error){
             console.log("Get oauth token error:"+error);
-            next();
+            for(var i in error)
+            {
+                console.log(""+error[i]);
+            }
+            var responseJSON = {};
+            responseJSON["error"] = "Failed to get oauth token."
+            res.send(responseJSON);
+            return;
         }
 
         console.log('oauth_token :' + oauth_token);
@@ -21,9 +28,12 @@ exports.do_oauth = function(req, res, next){
         user["oauth_token"] = oauth_token;
         user["oauth_token_secret"] = oauth_token_secret;
         req.session.user = user;
-
-        res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+config.server_domain+":"+config.server_port+"/oauth/callback");
-        res.end();
+        //FIXME
+        //res.redirect("http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+config.server_domain+":"+config.server_port+"/oauth/callback");
+        var responseJSON = {};
+        responseJSON["oauth_url"] = "http://m.fanfou.com/oauth/authorize?oauth_token="+oauth_token+"&oauth_callback="+config.server_domain+":"+config.server_port+"/oauth/callback";
+        res.send(responseJSON);
+        return;
     });
 };
 exports.oauth_callback = function(req, res, next){
@@ -58,7 +68,18 @@ exports.oauth_callback = function(req, res, next){
         console.log("oauth_access_token:"+oauth_access_token+" oauth_access_token_secret:"+oauth_access_token_secret);
         req.session.user["oauth_access_token"] = oauth_access_token;
         req.session.user["oauth_access_token_secret"] = oauth_access_token_secret;
-        res.redirect("/user/info");
-        res.end();
+        res.send("User authed.");
     });
+};
+exports.is_oauthed = function(req, res){
+    var responseJSON = {};
+    if(req.session.user && req.session.user.oauth_access_token && req.session.user.oauth_access_token_secret)
+    {
+        responseJSON["is_oauthed"] = true;
+    }
+    else
+    { 
+        responseJSON["is_oauthed"] = false;  
+    }
+    res.send(responseJSON);
 };

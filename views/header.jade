@@ -1,0 +1,15 @@
+.navbar.navbar-fixed-top
+            .navbar-inner
+                .container
+                    ul.nav
+                        li
+                            a(href="/") Home
+                        if locals.session
+                            if locals.session.user
+                                if locals.session.user.user_info
+                                    li
+                                        a(href="/user") Info
+                                    li
+                                        a(href="/user/map") Map
+                        li
+                            a(href="/about") About

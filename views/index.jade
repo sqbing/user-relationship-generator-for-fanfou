@@ -1,5 +1,62 @@
-extends layout
+!!! 5
+html
+    head
+        include scriptsandcsses
+        script
+            $(document).ready(function(){
+                var oauth_status_check_timer;
+                $("#oauth-button").click(function(){
+                    if($("#oauth").css('display') == 'none'){
+                        return;
+                    }
+                    // Check oauth status every 500ms
+                    oauth_status_check_timer = setInterval(function(){
+                        $.ajax("/oauth/is_oauthed").complete(function(xhr){
+                            if(JSON.parse(xhr.responseText).is_oauthed){
+                                // User oauthed, redirect to /user/info
+                                clearInterval(oauth_status_check_timer);
+                                $(location).attr("href", "/user");
+                            }
+                        });
+                    }, 500);
+                    $.ajax("/oauth").complete(function(xhr){
+                        if(xhr.responseText)
+                        {
+                            var responseJSON = JSON.parse(xhr.responseText);
+                            if(responseJSON == null || responseJSON.error){
+                                $("#oauth-indicator-text").html("Sorry, failed to get oauth token. Please refresh the page and try again.");
+                                $("#oauth-indicator-text").show();
+                                $("#oauth-progress").hide();
+                                clearInterval(oauth_status_check_timer);
+                            }
+                            else{
+                                $("#oauth-indicator-text").hide();
+                                $("#oauth-progress").hide();
+                                $("#oauth").append("<iframe id=\"oauth-iframe\" src=\""+JSON.parse(xhr.responseText).oauth_url+"\"></iframe>");
+                                $("#oauth-iframe").css("width", "555px");
+                                $("#oauth-iframe").css("height", "400px");
+                            }
+                        }
+                    });
+                });
+            });
+    body
+        include header
+        .container-fluid
+            .hero-unit
+                h1 FOR FANFOU!
+                if locals.session
+                    if locals.session.user
+                        a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth", style="display:none") OAuth认证
+                    else
+                        a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") OAuth认证
+                else
+                    a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") OAuth认证
+            #oauth.well.modal.fade
+                .modal-body
+                    h1.text-center#oauth-indicator-text Waiting...
+                    .progress.progress-striped.active#oauth-progress
+                        .bar(style="width:100%")
+                .modal-footer
+                    a.btn(data-dismiss="modal",data-target="#") Cancel
 
-block content
-  h1= title
-  p Welcome to #{title}

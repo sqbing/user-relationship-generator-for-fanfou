@@ -1,13 +1,50 @@
 var OAuth = require("oauth").OAuth;
 exports.show = function(req, res, next){
-    res.redirect("/index");
-    res.end();
+    if(req.session.user == null 
+        || req.session.user.oauth_access_token == null 
+        || req.session.user.oauth_access_token_secret == null){
+        next();
+        res.end();
+    }
+    var user = req.session.user;
+    if(user.user_info == null){
+        // If haven't got user info
+        console.log("User info invalid, get user info first.");
+        var access_token = req.session.user.oauth_access_token;
+        var access_secret = req.session.user.oauth_access_token_secret;
+        var oa = new OAuth( "http://fanfou.com/oauth/request_token",
+                        "http://fanfou.com/oauth/access_token",
+                        config.customer_key,
+                        config.customer_secret,
+                        "1.0",
+                        null,
+                        "HMAC-SHA1");
+        oa.getProtectedResource("http://api.fanfou.com/users/show.json", 
+                                "GET", 
+                                access_token, 
+                                access_secret,  
+                                function (error, data, response) {
+                                    if(error){
+                                        // Failed to get user info, reoauth.
+                                        console.log("Failed to get user info, error:"+error);
+                                        res.redirect("/oauth");
+                                        return;
+                                    }
+                                    var user_info = JSON.parse(data);
+                                    req.session.user["user_info"] = user_info;
+                                    exports.show(req, res, next);
+                                });        
+    }
+    else{
+        console.log("User info valid.");
+        var user_info = req.session.user.user_info;
+        res.render("user");
+    }
 };
 exports.info = function(req, res, next){
     if(req.session.user == null || req.session.user.oauth_access_token == null || req.session.user.oauth_access_token_secret == null)
     {
         res.redirect("/oauth");
-        res.end();
         return;
     }
 
@@ -38,15 +75,29 @@ exports.info = function(req, res, next){
                             });
 };
 exports.map = function(req, res, next){
+    if(req.session.user == null || req.session.user.oauth_access_token == null || req.session.user.oauth_access_token_secret == null){
+        res.redirect("/");
+        return;
+    }
+    res.render("map");
+    return;
+};
+exports.fetch_map = function(req, res, next){
     if(req.session.user  == null|| req.session.user.oauth_access_token == null || req.session.user.oauth_access_token_secret == null)
     {
         res.redirect("/oauth");
-        res.end();
         return;
     }
     if(req.session.user.following && req.session.user.followed)
     {
-        res.send("User "+req.session.user.user_info.id+" following "+req.session.user.following.length+" followed by "+req.session.user.followed.length+" users");
+        var following = req.session.user.following;
+        var followed = req.session.user.followed;
+        var responseJSON = {};
+        responseJSON["following"] = req.session.user.following;
+        responseJSON["followed"] = req.session.user.followed;
+        responseJSON["me"] = req.session.user.user_info;
+        res.send(responseJSON);
+        //res.send("User "+req.session.user.user_info.id+" following "+req.session.user.following.length+" followed by "+req.session.user.followed.length+" users");
         return;
     }
     var config = req.global_config;
@@ -71,11 +122,11 @@ exports.map = function(req, res, next){
                                         // Failed to get user info, reoauth.
                                         console.log("Failed to get user info, error:"+error);
                                         res.redirect("/oauth");
-                                        res.end();
+                                        return;
                                     }
                                     var user_info = JSON.parse(data);
                                     req.session.user["user_info"] = user_info;
-                                    exports.map(req, res, next);
+                                    exports.fetch_map(req, res, next);
                                 });        
     }
     else{
@@ -120,7 +171,12 @@ exports.map = function(req, res, next){
                                     // Fetching end, show list.
                                     req.session.user["following"] = following;
                                     req.session.user["followed"] = followed;
-                                    res.send("User "+req.session.user.user_info.id+" following "+following.length+" followed by "+followed.length+" users");
+                                    var responseJSON = {};
+                                    responseJSON["me"] = req.session.user.user_info;
+                                    responseJSON["following"] = req.session.user.following;
+                                    responseJSON["followed"] = req.session.user.followed;
+                                    res.send(responseJSON);
+                                    return;
                                 }
                                 else{
                                     // Save result and fetch again.
