@@ -2,5 +2,36 @@
 html
     head
         include scriptsandcsses
+        link(rel='stylesheet', href='/stylesheets/user.css')
+        script
+            $(document.ready(function(){
+                // 向服务器请求用户的消息
+                });
     body
         include header
+        .container-fluid
+            .hero-unit
+                .row
+                    if locals.session.user
+                        if locals.session.user.user_info
+                            .span9#div-for-user-statuses
+                                .row
+                                    .span2
+                                    .span8
+                                        .progress.progress-striped.active(style="width:200px")
+                                            .bar(style="width:100%")
+                                        p 正在加载您的全部消息
+                                    .span2
+                            .span3#div-for-user-profile
+                                .row
+                                    .span6
+                                        img#profile-image(src=locals.session.user.user_info.profile_image_url_large)
+                                    .span6
+                                        p#screen-name= locals.session.user.user_info.screen_name
+                                .row
+                                    p= locals.session.user.user_info.friends_count
+                                    p 我关注的人
+                                    p= locals.session.user.user_info.followers_count
+                                    p 关注我的人
+                                    p= locals.session.user.user_info.statuses_count
+                                    p 消息

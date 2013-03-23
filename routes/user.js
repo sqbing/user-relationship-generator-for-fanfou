@@ -4,7 +4,7 @@ exports.show = function(req, res, next){
         || req.session.user.oauth_access_token == null 
         || req.session.user.oauth_access_token_secret == null){
         next();
-        res.end();
+        return;
     }
     var user = req.session.user;
     if(user.user_info == null){
@@ -67,6 +67,7 @@ exports.info = function(req, res, next){
                                 {
                                     console.log("Failed to get user info, error:"+error);
                                     next();
+                                    return;
                                 }
                                 var user_info = JSON.parse(data);
                                 req.session.user["user_info"] = user_info;

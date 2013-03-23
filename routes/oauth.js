@@ -40,14 +40,17 @@ exports.oauth_callback = function(req, res, next){
     if(req.query.oauth_token == null)
     {
         next();
+        return;
     }
     if(req.session.user == null)
     {
         next();
+        return;
     }
     if(req.session.user.oauth_token == null || req.session.user.oauth_token_secret == null)
     {
         next();
+        return;
     }
      var oa = new OAuth( "http://fanfou.com/oauth/request_token",
                     "http://fanfou.com/oauth/access_token",
@@ -64,11 +67,12 @@ exports.oauth_callback = function(req, res, next){
         if(error){
             console.log("Get oauth token error:"+error);
             next();
+            return;
         }
         console.log("oauth_access_token:"+oauth_access_token+" oauth_access_token_secret:"+oauth_access_token_secret);
         req.session.user["oauth_access_token"] = oauth_access_token;
         req.session.user["oauth_access_token_secret"] = oauth_access_token_secret;
-        res.send("User authed.");
+        res.send("<h1>认证通过，请等待页面刷新……</h1>");
     });
 };
 exports.is_oauthed = function(req, res){
