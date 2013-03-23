@@ -2,6 +2,7 @@
 html
     head
         include scriptsandcsses
+        link(rel='stylesheet', href='/stylesheets/index.css')
         script
             $(document).ready(function(){
                 var oauth_status_check_timer;
@@ -44,14 +45,17 @@ html
         include header
         .container-fluid
             .hero-unit
-                h1 FOR FANFOU!
-                if locals.session
-                    if locals.session.user
-                        a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth", style="display:none") OAuth认证
-                    else
-                        a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") OAuth认证
-                else
-                    a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") OAuth认证
+                .row
+                    .span9
+                        h1#div-for-fanfou FOR FANFOU! FOR 42!
+                    .span3#span-for-oauth-button
+                        if locals.session
+                            if locals.session.user
+                                a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth", style="display:none") OAuth认证
+                            else
+                                a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") OAuth认证
+                        else
+                            a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") OAuth认证
             #oauth.well.modal.fade
                 .modal-body
                     h1.text-center#oauth-indicator-text Waiting...
