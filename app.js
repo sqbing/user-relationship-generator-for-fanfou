@@ -2,6 +2,7 @@
  * Module dependencies.
  */
 
+var redis = require("redis");
 var express = require('express')
   , routes = require('./routes')
   , http = require('http')
@@ -40,6 +41,38 @@ app.configure('development', function(){
   app.use(express.errorHandler());
 });
 
+// Some configure for Appfog
+app.configure('production', function(){
+        var env = JSON.parse(process.env.VCAP_SERVICES);
+        config.redis = env['redis-2.2'][0]['credentials'];
+});
+
+// Connect to redis server
+if(config.redis.host && config.redis.port)
+{
+    console.log("connect to redis...");
+    config.redis["client"] = redis.createClient(config.redis.port, config.redis.host);
+    config.redis.client.on("error", function(err){
+        console.log("Redis error: "+err);
+    });
+    config.redis.client.on("ready", function(){
+        console.log("succeeded to connect to redis client.");
+        if(config.redis.password)
+        {
+            config.redis.client.auth(config.redis.password, function(err){
+                // TODO auth callback function
+                console.log("Redis auth error: "+err);
+            });
+        }
+    })
+    process.on("exit", function(){
+        if(config.redis.client)
+        {
+            console.log("disconnect from redis.");
+            config.redis.client.end();
+        }
+    });
+}
 routes(app);
 if(config.customer_key == null || config.customer_secret == null)
 {

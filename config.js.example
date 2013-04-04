@@ -7,5 +7,13 @@ module.exports = {
 
     "customer_key":"",
     "customer_secret":"",
-    "session_secret":""
+    "session_secret":"",
+
+    "redis":{
+        "hostname":"127.0.0.1",
+        "host":"127.0.0.1",
+        "port":0614,
+        "password":"",
+        "name":""
+    }
 };
