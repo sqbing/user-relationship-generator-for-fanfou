@@ -6,6 +6,12 @@ html
         script
             $(document).ready(function(){
                 var oauth_status_check_timer;
+                $("#unauth-button").click(function(){
+                    // TODO unoauth user
+                    $.ajax("/unauth").complete(function(xhr){
+                        $(location).attr("href", "/");
+                    });
+                });
                 $("#oauth-button").click(function(){
                     if($("#oauth").css('display') == 'none'){
                         return;
@@ -48,14 +54,16 @@ html
                 .row
                     .span9
                         h1#div-for-fanfou FOR FANFOU! FOR 42!
-                    .span3#span-for-oauth-button
-                        if locals.session
-                            if locals.session.user
-                                a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth", style="display:none") OAuth认证
-                            else
-                                a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") OAuth认证
+                    if locals.session
+                        if locals.session.user
+                            .span3#span-for-oauth-button
+                                a.btn.btn-primary.btn-large#unauth-button 退出登陆
                         else
-                            a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") OAuth认证
+                            .span3#span-for-oauth-button
+                                a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") 使用饭否账号登陆
+                    else
+                        .span3#span-for-oauth-button
+                            a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") 使用饭否账号登陆
             #oauth.well.modal.fade
                 .modal-body
                     h1.text-center#oauth-indicator-text Waiting...

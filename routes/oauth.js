@@ -87,3 +87,11 @@ exports.is_oauthed = function(req, res){
     }
     res.send(responseJSON);
 };
+exports.unauth = function(req, res){
+    if(req.session && req.session.user)
+    {
+        console.log("User unauthed.");
+        req.session.user = null;
+    }
+    res.end();
+};
