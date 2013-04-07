@@ -1,0 +1,31 @@
+!!! 5
+html
+    head
+        include scriptsandcsses
+    body
+        include header
+        .container-fluid
+            .messages_list
+                .row
+                    .span9("style"="margin-left:150px;")
+                        each message in messages
+                            .row
+                                .hero-unit("style"="margin:5px;padding:20px;")
+                                    .row
+                                        p("style"="margin:0px 0px 0px 20px;")= message.text
+                                    .row
+                                        p("style"="text-align:right;font-size:10px;color:grey;")= message.created_at
+                    .span3
+                        .hero-unit
+                            .row
+                                img#profile-image(src=locals.session.user.user_info.profile_image_url_large)
+                            .row
+                                .row
+                                    .span("style"="color:grey;") 我关注的人
+                                    .span("style"="text-align:right;font-weight:bold;")= locals.session.user.user_info.friends_count
+                                .row
+                                    .span("style"="color:grey;") 关注我的人
+                                    .span("style"="text-align:right;font-weight:bold;")= locals.session.user.user_info.followers_count
+                                .row
+                                    .span("style"="color:grey;") 消息
+                                    .span("style"="text-align:right;font-weight:bold;")= locals.session.user.user_info.statuses_count

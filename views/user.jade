@@ -4,17 +4,52 @@ html
         include scriptsandcsses
         link(rel='stylesheet', href='/stylesheets/user.css')
         script
-            $(document.ready(function(){
-                // 向服务器请求用户的消息
-                });
+           $(document).ready(function(){
+               $.ajax("/user/export_messages_status").complete(function(xhr){
+                   console.log(xhr.responseText);
+                   var responseJSON = JSON.parse(xhr.responseText);
+                   if(!responseJSON)
+                   {
+                       console.log("Failed to parse server response");
+                       $("#div-for-export-user-messages").html("导出消息失败，服务器返回无效。");
+                       return;
+                   }
+                   /*
+                   if(responseJSON.result == "fail")
+                   {
+                       console.log("Server return "+responseJSON.reason);
+                       $("#div-for-export-user-messages").html(responseJSON.reason);
+                   }
+                   else */if(responseJSON.result == "completed")
+                   {
+                       $("#div-for-export-user-messages").html("导出完成，<a class='btn btn-primary' href='/user/exported_messages'>打开</a>查看。");
+                   }
+                   else if(responseJSON.result == "waiting" || responseJSON.result == "fetching")
+                   {
+                       $("#div-for-export-user-messages").html("导出仍在进行，请耐心等待。");
+                   }
+                   else
+                   {
+                       console.log("User export messages status invalid");
+                       $("#div-for-export-user-messages").html("<a class='btn btn-primary btn-large' id='btn-for-export-user-messages'>导出所有消息</a>");
+                   }
+                   //$("#div-for-export-user-messages").html(responseJSON.reason);
+                   $("#btn-for-export-user-messages").click(function(){
+                       $.ajax("/user/export_messages");
+                       $("#div-for-export-user-messages").html("导出正在进行，请耐心等待。");
+                       });
+                   });
+               }); 
     body
         include header
         .container-fluid
-            .hero-unit
-                .row
-                    if locals.session.user
-                        if locals.session.user.user_info
-                            .span9#div-for-user-statuses
+            .row
+                if locals.session.user
+                    if locals.session.user.user_info
+                        .span9#div-for-user-statuses("style"="margin-left:150px;")
+                            .hero-unit
+                                .row
+                                    .span12#div-for-export-user-messages
                                 .row
                                     .span2
                                     .span8
@@ -22,16 +57,17 @@ html
                                             .bar(style="width:100%")
                                         p 正在加载您的全部消息
                                     .span2
-                            .span3#div-for-user-profile
+                        .span3#div-for-user-profile
+                            .hero-unit
                                 .row
-                                    .span6
-                                        img#profile-image(src=locals.session.user.user_info.profile_image_url_large)
-                                    .span6
-                                        p#screen-name= locals.session.user.user_info.screen_name
+                                    img#profile-image(src=locals.session.user.user_info.profile_image_url_large)
                                 .row
-                                    p= locals.session.user.user_info.friends_count
-                                    p 我关注的人
-                                    p= locals.session.user.user_info.followers_count
-                                    p 关注我的人
-                                    p= locals.session.user.user_info.statuses_count
-                                    p 消息
+                                    .row
+                                        .span("style"="color:grey;") 我关注的人
+                                        .span("style"="text-align:right;font-weight:bold;")= locals.session.user.user_info.friends_count
+                                    .row
+                                        .span("style"="color:grey;") 关注我的人
+                                        .span("style"="text-align:right;font-weight:bold;")= locals.session.user.user_info.followers_count
+                                    .row
+                                        .span("style"="color:grey;") 消息
+                                        .span("style"="text-align:right;font-weight:bold;")= locals.session.user.user_info.statuses_count

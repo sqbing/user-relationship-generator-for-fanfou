@@ -83,6 +83,170 @@ exports.map = function(req, res, next){
     res.render("map");
     return;
 };
+exports.export_messages_status = function(req, res)
+{
+    var responseJSON = {};
+    if(!req.session || !req.session.user)
+    {
+        console.log("Failed to export messages, user not authed.");
+        responseJSON["result"] = "fail";
+        responseJSON["reason"] = "User not authed.";
+        res.send(responseJSON);
+        return;
+    }
+    var config = req.global_config;
+    if(!config.redis.client)
+    {
+        console.log("Failed to export messages, redis not connected.");
+        responseJSON["result"] = "fail";
+        responseJSON["reason"] = "Redis not connected.";
+        res.send(responseJSON);
+        return;
+    }
+    var redis_client = config.redis.client;
+    redis_client.hgetall("user_info:"+req.session.user.user_info.id, function(err, obj){
+        if(err)
+        {
+            console.log("user_info:"+req.session.user.user_info.id+" not found, "+err);
+            responseJSON["result"] = "fail";
+            responseJSON["reason"] = "Redis error.";
+            res.send(responseJSON);
+            return;
+        }
+        if(obj)
+        {
+            if(obj.export_status == "completed")
+            {
+                console.log(req.session.user.user_info.id+" messages all exported.");
+                responseJSON["result"] = "completed";
+                responseJSON["reason"] = "Export completed.";
+                res.send(responseJSON);
+                return;
+            }
+            else if(obj.export_status == "waiting")
+            {
+                console.log(req.session.user.user_info.id+" waiting in queue.");
+                responseJSON["result"] = "waiting";
+                responseJSON["reason"] = "Waiting in queue.";
+                res.send(responseJSON);
+                return;
+            }
+            else if(obj.export_status == "fetching")
+            {
+                console.log(req.session.user.user_info.id+" in fetching messages.");
+                responseJSON["result"] = "fetching";
+                responseJSON["reason"] = "Export not completed.";
+                res.send(responseJSON);
+                return;
+            }
+        }
+        console.log("User export messages status invalid.");
+        responseJSON["result"] = "invalid";
+        res.send(responseJSON);
+        return;
+    });
+}
+exports.export_messages = function(req, res)
+{
+    var responseJSON = {};
+    if(!req.session || !req.session.user)
+    {
+        console.log("Failed to export messages, user not authed.");
+        responseJSON["result"] = "fail";
+        responseJSON["reason"] = "User not authed.";
+        res.send(responseJSON);
+        return;
+    }
+    // TODO fetch user info
+    // if(!req.session.user.user_info)
+    // {
+    // }
+    var config = req.global_config;
+    if(!config.redis.client)
+    {
+        console.log("Failed to export messages, redis not connected.");
+        responseJSON["result"] = "fail";
+        responseJSON["reason"] = "Redis not connected.";
+        res.send(responseJSON);
+        return;
+    }
+    var redis_client = config.redis.client;
+    redis_client.hgetall("user_info:"+req.session.user.user_info.id, function(err, obj){
+        if(err)
+        {
+            console.log("user_info:"+req.session.user.user_info.id+" not found, "+err);
+            responseJSON["result"] = "fail";
+            responseJSON["reason"] = "Redis error.";
+            res.send(responseJSON);
+            return;
+        }
+        if(obj)
+        {
+            if(obj.export_status == "completed")
+            {
+                console.log(req.session.user.user_info.id+" messages all exported.");
+                responseJSON["result"] = "completed";
+                responseJSON["reason"] = "Export completed.";
+                res.send(responseJSON);
+                return;
+            }
+            else if(obj.export_status == "waiting")
+            {
+                console.log(req.session.user.user_info.id+" waiting in queue.");
+                responseJSON["result"] = "waiting";
+                responseJSON["reason"] = "Waiting in queue.";
+                res.send(responseJSON);
+                return;
+            }
+            else if(obj.export_status == "fetching")
+            {
+                console.log(req.session.user.user_info.id+" in fetching messages.");
+                responseJSON["result"] = "fetching";
+                responseJSON["reason"] = "Export not completed.";
+                res.send(responseJSON);
+                return;
+            }
+            /*
+            else
+            {
+                console.log(req.session.user.user_info.id+" export status invalid.");
+                redis_client.lpush("export_waiting_queue", req.session.user.user_info.id);
+                responseJSON["result"] = "waiting";
+                responseJSON["reason"] = "Waiting in queue.";
+                res.send(responseJSON);
+                return;
+            }
+            */
+        }
+        /*
+        else
+        {
+            // 将用户加入等待队列
+            //redis_client.HMSET("user_info:"+req.session.user.user_info.id, req.session.user.user_info);
+            redis_client.hmset("user_info:"+req.session.user.user_info.id, 
+                    "export_status", "waiting", 
+                    "access_token", req.session.user.oauth_access_token, 
+                    "access_secret", req.session.user.oauth_access_token_secret);
+            redis_client.lpush("export_waiting_queue", req.session.user.user_info.id);
+            responseJSON["result"] = "success";
+            responseJSON["reason"] = "Waiting in queue.";
+            res.send(responseJSON);
+            return;
+        }
+        */
+        // 将用户加入等待队列
+        //redis_client.HMSET("user_info:"+req.session.user.user_info.id, req.session.user.user_info);
+        redis_client.hmset("user_info:"+req.session.user.user_info.id, 
+                "export_status", "waiting", 
+                "access_token", req.session.user.oauth_access_token, 
+                "access_secret", req.session.user.oauth_access_token_secret);
+        redis_client.lpush("export_waiting_queue", req.session.user.user_info.id);
+        responseJSON["result"] = "success";
+        responseJSON["reason"] = "Waiting in queue.";
+        res.send(responseJSON);
+        return;
+    });
+};
 exports.fetch_map = function(req, res, next){
     if(req.session.user  == null|| req.session.user.oauth_access_token == null || req.session.user.oauth_access_token_secret == null)
     {
@@ -237,4 +401,85 @@ exports.fetch_map = function(req, res, next){
     };
     fetch_following(req.session.user.user_info.id, 1);
     }
+};
+exports.exported_messages = function(req, res)
+{
+    var responseJSON = {};
+    if(!req.session || !req.session.user)
+    {
+        console.log("Failed to export messages, user not authed.");
+        responseJSON["result"] = "fail";
+        responseJSON["reason"] = "User not authed.";
+        res.send(responseJSON);
+        return;
+    }
+    // TODO fetch user info
+    // if(!req.session.user.user_info)
+    // {
+    // }
+    var config = req.global_config;
+    if(!config.redis.client)
+    {
+        console.log("Failed to show exported messages, redis not connected.");
+        res.send("");
+        return;
+    }
+    var redis_client = config.redis.client;
+    redis_client.hgetall("user_info:"+req.session.user.user_info.id, function(err, obj){
+        if(err)
+        {
+            console.log("Failed to show exported messages, redis return err."+err);
+            res.send("");
+            return;
+        }
+        if(obj)
+        {
+            if(obj.export_status == "completed")
+            {
+                // TODO
+                console.log("All messages exported.");
+                redis_client.llen("user_messages:"+req.session.user.user_info.id, function(err, messages_length){
+                    if(err)
+                    {
+                        console.log("Failed to get user_messages:"+req.session.user.user_info.id+" lenght");
+                        res.send("");
+                        return;
+                    }
+                    redis_client.lrange("user_messages:"+req.session.user.user_info.id, 0, messages_length-1, function(err, messages){
+                        if(err)
+                        {
+                            console.log("Failed to get user_messages:"+req.session.user.user_info.id+" all messages.");
+                            res.send("");
+                            return;
+                        }
+
+                        for(var message_index in messages)
+                        {
+                            messages[message_index] = JSON.parse(messages[message_index]);
+                            // 转换时间
+                            var new_date_string = "";
+                            var created_at = new Date(messages[message_index].created_at);
+                            new_date_string = created_at.getFullYear()+"年 "+created_at.getMonth()+"月 "+created_at.getDate()+"日 "+created_at.getHours()+":"+created_at.getMinutes()+":"+created_at.getSeconds();
+                            messages[message_index].created_at = new_date_string;
+                        }
+                        res.render("exported_messages", {"messages":messages});
+                        //res.send("Not implemented.");
+                        return;
+                    });
+                });
+            }
+            else
+            {
+                console.log("Messages not all exported.");
+                res.send("");
+                return;
+            }
+        }
+        else
+        {
+            console.log("Messages not all exported.");
+            res.send("");
+            return;
+        }
+    });
 };

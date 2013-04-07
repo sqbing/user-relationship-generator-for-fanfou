@@ -7,7 +7,8 @@ var express = require('express')
   , routes = require('./routes')
   , http = require('http')
   , path = require('path')
-  , config = require('./config');
+  , config = require('./config')
+  , observer = require("./observer");
 
 var app = express();
 
@@ -70,15 +71,17 @@ if(config.redis.host && config.redis.port)
         {
             console.log("disconnect from redis.");
             config.redis.client.end();
+            config.redis.client = null;
         }
     });
 }
 routes(app);
 if(config.customer_key == null || config.customer_secret == null)
 {
-  console.log("customer_key or customer_secret null.");
-  process.exit(1);
+    console.log("customer_key or customer_secret null.");
+    process.exit(1);
 }
 http.createServer(app).listen(app.get('port'), function(){
-  console.log("Express server listening on port " + app.get('port'));
+    console.log("Express server listening on port " + app.get('port'));
+    observer.run(config);
 });
