@@ -21,6 +21,7 @@ var export_user_messages = function(config){
                 // 删除已获取的用户消息
                 redis_client.del("user_messages:"+user_id);
                 console.log("Start fetching messages for user "+user_id);
+                redis_client.hmset("user_info:"+user_id, "export_status", "exporting");
                 // 从用户信息map中获取用户的access_token等信息
                 redis_client.hgetall("user_info:"+user_id, function(err, user_info){
                     if(err)

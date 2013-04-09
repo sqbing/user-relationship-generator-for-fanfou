@@ -44,30 +44,19 @@ html
         include header
         .container-fluid
             .row
-                if locals.session.user
-                    if locals.session.user.user_info
-                        .span9#div-for-user-statuses("style"="margin-left:150px;")
-                            .hero-unit
-                                .row
-                                    .span12#div-for-export-user-messages
-                                .row
-                                    .span2
-                                    .span8
-                                        .progress.progress-striped.active(style="width:200px")
-                                            .bar(style="width:100%")
-                                        p 正在加载您的全部消息
-                                    .span2
-                        .span3#div-for-user-profile
-                            .hero-unit
-                                .row
-                                    img#profile-image(src=locals.session.user.user_info.profile_image_url_large)
-                                .row
-                                    .row
-                                        .span("style"="color:grey;") 我关注的人
-                                        .span("style"="text-align:right;font-weight:bold;")= locals.session.user.user_info.friends_count
-                                    .row
-                                        .span("style"="color:grey;") 关注我的人
-                                        .span("style"="text-align:right;font-weight:bold;")= locals.session.user.user_info.followers_count
-                                    .row
-                                        .span("style"="color:grey;") 消息
-                                        .span("style"="text-align:right;font-weight:bold;")= locals.session.user.user_info.statuses_count
+                .row-fluid("style"="margin-top:5px;margin-left:5px;")
+                    if locals.session.user
+                        if locals.session.user.user_info
+                            .span9#div-for-user-statuses
+                                .row-fluid
+                                    .hero-unit
+                                        .span12
+                                                #div-for-export-user-messages
+                                .hero-unit
+                                    .row-fluid("style"="margin-top:20px;")
+                                        .span12
+                                            .progress.progress-striped.active(style="width:200px;margin-left:auto;margin-right:auto;")
+                                                .bar(style="width:100%")
+                                            div(style="width:200px;margin-left:auto;margin-right:auto;") 正在加载您的全部消息
+                            .span3
+                                include user_info
