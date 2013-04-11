@@ -13,7 +13,7 @@ module.exports = function(app)
     app.get("/user/fetch_map", user.fetch_map, index);
     app.get("/user/export_messages", user.export_messages);
     app.get("/user/export_messages_status", user.export_messages_status);
-    app.get("/user/exported_messages", user.exported_messages);
+    app.get("/user/exported_messages", user.exported_messages, index);
     
     app.get('/oauth', oauth.do_oauth, index);
     app.get("/unauth", oauth.unauth)

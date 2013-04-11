@@ -7,6 +7,7 @@ exports.show = function(req, res, next){
         return;
     }
     var user = req.session.user;
+    var config = req.global_config;
     if(user.user_info == null){
         // If haven't got user info
         console.log("User info invalid, get user info first.");
@@ -36,9 +37,42 @@ exports.show = function(req, res, next){
                                 });        
     }
     else{
-        console.log("User info valid.");
-        var user_info = req.session.user.user_info;
-        res.render("user");
+        //console.log("User info valid.");
+        //var user_info = req.session.user.user_info;
+        var access_token = req.session.user.oauth_access_token;
+        var access_secret = req.session.user.oauth_access_token_secret;
+        var oa = new OAuth( "http://fanfou.com/oauth/request_token",
+                        "http://fanfou.com/oauth/access_token",
+                        config.customer_key,
+                        config.customer_secret,
+                        "1.0",
+                        null,
+                        "HMAC-SHA1");
+        oa.getProtectedResource("http://api.fanfou.com/statuses/user_timeline.json", 
+                                "GET", 
+                                access_token, 
+                                access_secret,  
+                                function (error, data, response) {
+                                    if(error)
+                                    {
+                                        console.log("Failed to get user's latest 20 statuses in /user. data: "+data);
+                                        res.render("user",{"messages":[]});
+                                        return;
+                                    }
+                                    else
+                                    {
+                                        var messages = JSON.parse(data);
+                                        for(var message_index in messages)
+                                        {
+                                            var new_date_string = "";
+                                            var created_at = new Date(messages[message_index].created_at);
+                                            new_date_string = created_at.getFullYear()+"年 "+created_at.getMonth()+"月 "+created_at.getDate()+"日 "+created_at.getHours()+":"+created_at.getMinutes()+":"+created_at.getSeconds();
+                                            messages[message_index].created_at = new_date_string;
+                                        }
+                                        res.render("user", {"messages":messages});
+                                        return;
+                                    }
+                                });
     }
 };
 exports.info = function(req, res, next){
@@ -51,14 +85,14 @@ exports.info = function(req, res, next){
     var config = req.global_config;
     var access_token = req.session.user.oauth_access_token;
     var access_secret = req.session.user.oauth_access_token_secret;
-     var oa = new OAuth( "http://fanfou.com/oauth/request_token",
+    var oa = new OAuth( "http://fanfou.com/oauth/request_token",
                     "http://fanfou.com/oauth/access_token",
                     config.customer_key,
                     config.customer_secret,
                     "1.0",
                     null,
                     "HMAC-SHA1");
-     oa.getProtectedResource("http://api.fanfou.com/users/show.json", 
+    oa.getProtectedResource("http://api.fanfou.com/users/show.json", 
                             "GET", 
                             access_token, 
                             access_secret,  
@@ -402,15 +436,13 @@ exports.fetch_map = function(req, res, next){
     fetch_following(req.session.user.user_info.id, 1);
     }
 };
-exports.exported_messages = function(req, res)
+exports.exported_messages = function(req, res, next)
 {
     var responseJSON = {};
     if(!req.session || !req.session.user)
     {
         console.log("Failed to export messages, user not authed.");
-        responseJSON["result"] = "fail";
-        responseJSON["reason"] = "User not authed.";
-        res.send(responseJSON);
+        next();
         return;
     }
     // TODO fetch user info
@@ -421,7 +453,8 @@ exports.exported_messages = function(req, res)
     if(!config.redis.client)
     {
         console.log("Failed to show exported messages, redis not connected.");
-        res.send("");
+        //res.send("");
+        next();
         return;
     }
     var redis_client = config.redis.client;

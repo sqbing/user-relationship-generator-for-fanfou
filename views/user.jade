@@ -1,8 +1,13 @@
 !!! 5
 html
     head
-        include scriptsandcsses
+        script(src="/js/jquery-1.7.2.min.js")
+        script(src="/javascripts/bootstrap.js")
+        link(rel='stylesheet', href='/stylesheets/bootstrap.css')
+        link(rel='stylesheet', href='/stylesheets/common.css')
         link(rel='stylesheet', href='/stylesheets/user.css')
+        link(rel='stylesheet', href='/css/lightbox.css')
+        script(src="/js/lightbox.js")
         script
            $(document).ready(function(){
                $.ajax("/user/export_messages_status").complete(function(xhr){
@@ -26,37 +31,45 @@ html
                    }
                    else if(responseJSON.result == "waiting" || responseJSON.result == "fetching")
                    {
-                       $("#div-for-export-user-messages").html("导出仍在进行，请耐心等待。");
+                       $("#div-for-export-user-messages").html("导出仍在进行，请耐心等待。导出成功后，您将收到一条私信通知。");
                    }
                    else
                    {
                        console.log("User export messages status invalid");
-                       $("#div-for-export-user-messages").html("<a class='btn btn-primary btn-large' id='btn-for-export-user-messages'>导出所有消息</a>");
+                       $("#div-for-export-user-messages").html("<a class='btn btn-primary btn-large' id='btn-for-export-user-messages'>导出</a>所有消息");
                    }
                    //$("#div-for-export-user-messages").html(responseJSON.reason);
                    $("#btn-for-export-user-messages").click(function(){
                        $.ajax("/user/export_messages");
-                       $("#div-for-export-user-messages").html("导出正在进行，请耐心等待。");
+                       $("#div-for-export-user-messages").html("导出正在进行，请耐心等待。导出成功后，您将收到一条私信通知。");
                        });
                    });
                }); 
     body
         include header
         .container-fluid
-            .row
-                .row-fluid("style"="margin-top:5px;margin-left:5px;")
-                    if locals.session.user
-                        if locals.session.user.user_info
-                            .span9#div-for-user-statuses
-                                .row-fluid
-                                    .hero-unit
-                                        .span12
-                                                #div-for-export-user-messages
-                                .hero-unit
-                                    .row-fluid("style"="margin-top:20px;")
-                                        .span12
-                                            .progress.progress-striped.active(style="width:200px;margin-left:auto;margin-right:auto;")
-                                                .bar(style="width:100%")
-                                            div(style="width:200px;margin-left:auto;margin-right:auto;") 正在加载您的全部消息
-                            .span3
+            .row-fluid("style"="margin-top:5px;margin-left:5px;")
+                if locals.session.user
+                    if locals.session.user.user_info
+                        .span9
+                            #div-for-export-user-messages
+                            if messages
+                                each message in messages
+                                    .row
+                                        .hero-unit("style"="margin:5px;padding:20px;")
+                                            if message.photo
+                                                .row
+                                                    .span10
+                                                        p("style"="margin:0px 0px 0px 20px;")= message.text
+                                                    .span2
+                                                        .img-wrapper("style"="padding-right:20px;text-align:right;")
+                                                            a("rel"="lightbox[imgs]", "href"="#{message.photo.largeurl}")
+                                                                img("src"= message.photo.largeurl)
+                                            else
+                                                .row
+                                                    p("style"="margin:0px 0px 0px 20px;")= message.text
+                                            .row
+                                                p("style"="text-align:right;font-size:10px;color:grey;")= message.created_at
+                        .span3
+                            .div("style"="margin-top:5px;")
                                 include user_info
