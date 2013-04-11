@@ -14,6 +14,7 @@ module.exports = function(app)
     app.get("/user/export_messages", user.export_messages);
     app.get("/user/export_messages_status", user.export_messages_status);
     app.get("/user/exported_messages", user.exported_messages, index);
+    app.get("/user/user_info_span", user.user_info_span);
     
     app.get('/oauth', oauth.do_oauth, index);
     app.get("/unauth", oauth.unauth)

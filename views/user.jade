@@ -1,13 +1,13 @@
 !!! 5
 html
     head
-        script(src="/js/jquery-1.7.2.min.js")
+        script(src="/javascripts/jquery-1.7.2.min.js")
         script(src="/javascripts/bootstrap.js")
         link(rel='stylesheet', href='/stylesheets/bootstrap.css')
         link(rel='stylesheet', href='/stylesheets/common.css')
         link(rel='stylesheet', href='/stylesheets/user.css')
-        link(rel='stylesheet', href='/css/lightbox.css')
-        script(src="/js/lightbox.js")
+        link(rel='stylesheet', href='/stylesheets/lightbox.css')
+        script(src="/javascripts/lightbox.js")
         script
            $(document).ready(function(){
                $.ajax("/user/export_messages_status").complete(function(xhr){

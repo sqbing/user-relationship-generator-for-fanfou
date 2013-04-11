@@ -1,33 +1,123 @@
 !!! 5
 html
     head
-        script(src="/js/jquery-1.7.2.min.js")
+        script(src="/javascripts/jquery-1.7.2.min.js")
         script(src="/javascripts/bootstrap.js")
         link(rel='stylesheet', href='/stylesheets/bootstrap.css')
         link(rel='stylesheet', href='/stylesheets/common.css')
-        link(rel='stylesheet', href='/css/lightbox.css')
-        script(src="/js/lightbox.js")
+        link(rel='stylesheet', href='/stylesheets/lightbox.css')
+        script(src="/javascripts/lightbox.js")
+        script
+            $(document).ready(function(){
+                $("#loading-messages").modal('show');
+                var page = 1;
+                var count = 20;
+                var messages = [];
+                var fetch_export_messages = function(page, count){
+                    $.ajax("/user/export_messages_status?page="+page+"&count="+count).complete(function(xhr){
+                        if(xhr.responseText)
+                        {
+                            var responseJSON = JSON.parse(xhr.responseText);
+                            if(!responseJSON.messages)
+                            {
+                                console.log("messages null.");
+                                $("#loading-messages-modal-body").html("<h1 class='text-center'>Failed to load messages, refresh the page and try again.</h1>");
+                                return;
+                            }
+                            if(responseJSON.result != "completed" || (page==1 && responseJSON.messages.length == 0))
+                            {
+                                // Tell user failed to get exported messages.
+                                $("#loading-messages-modal-body").html("<h1 class='text-center'>Failed to load messages, refresh the page and try again.</h1>");
+                                return;
+                            }
+                            if(responseJSON.messages.length == 0)
+                            {
+                                // Tell user exported messages all loaded.
+                                //$("#loading-messages-modal-body").html("<h1 class='text-center'>All messages loaded.</h1>");
+                                // Modify DOM and show to user.
+                                var div_node = "<div></div>";
+                                $(div_node, {id:"outer-container", class:"container-fluid"}).appendTo("#messages_content");
+                                $(div_node, {id:"outer-row", class:"row-fluid"}).appendTo("#outer-container");
+                                $(div_node, {id:"messages-span", class:"span9"}).appendTo("#outer-row");
+                                for(var message_index in messages)
+                                {
+                                    var message = JSON.parse(messages[message_index]);
+                                    if(message.photo)
+                                    {
+                                        // With photo
+                                        $("#messages-span").append("<div class='row'>"
+                                                                        +"<div class='hero-unit' style='margin:5px;padding:20px;'>"
+                                                                            +"<div class='row-fluid'>"
+                                                                            +"<div class='span10'>"
+                                                                                +"<p style='margin:0px 0px 0px 20px;'>"+message.text+"</p>"
+                                                                            +"</div>"
+                                                                            +"<div class='span2'>"
+                                                                                +"<div class='img-wrapper' style='padding-right:20px;text-align:right;'>"
+                                                                                    +"<a rel='lightbox[imgs]' href="+message.photo.largeurl+">"
+                                                                                        +"<img src='"+message.photo.largeurl+"'></img>"
+                                                                                    +"</a>"
+                                                                                +"</div>"
+                                                                            +"</div>"
+                                                                            +"</div>"
+                                                                            +"<div class='row'>"
+                                                                                +"<p style='text-align:right;font-size:10px;color:grey;'>"+message.created_at+"</p>"
+                                                                            +"</div>"
+                                                                        +"</div>"
+                                                                    +"</div>");
+                                    }
+                                    else
+                                    {
+                                        // Without photo
+                                        $("#messages-span").append("<div class='row'>"
+                                                                        +"<div class='hero-unit' style='margin:5px;padding:20px;'>"
+                                                                            +"<div class='row'>"
+                                                                                +"<p style='margin:0px 0px 0px 20px;'>"+message.text+"</p>"
+                                                                            +"</div>"
+                                                                            +"<div class='row'>"
+                                                                                +"<p style='text-align:right;font-size:10px;color:grey;'>"+message.created_at+"</p>"
+                                                                            +"</div>"
+                                                                        +"</div>"
+                                                                    +"</div>");
+                                    }
+                                }
+                                $(div_node, {id:"user-info-span", class:"span3", style:"margin-top:5px;"}).appendTo("#outer-row");
+                                // TODO Get user info
+                                $.ajax("/user/user_info_span").complete(function(xhr){
+                                    if(!xhr.responseText)
+                                    {
+                                        return;
+                                    }
+                                    $("#user-info-span").append(xhr.responseText);
+                                });
+                                //$("#outer-container").html("hello world");
+                                $("#loading-messages").modal('hide');
+                                return;
+                            }
+                            for(var index in responseJSON.messages)
+                            {
+                                messages.push(responseJSON.messages[index]);
+                            }
+                            var loading_percent = 100*messages.length/responseJSON.all_messages_count;
+                            console.log("messages at page: "+page+" fetched"+" percent: "+loading_percent+"%");
+                            $("#loading-progress-bar").css("width", loading_percent+"%");
+                            // Update progress bar
+                            fetch_export_messages(++page, count);
+                            return;
+                        }
+                        else
+                        {
+                            // Tell user failed to get exported messages.
+                            return;
+                        }
+                    });
+                };
+                fetch_export_messages(1, 20);
+            });
     body
         include header
-        .container-fluid
-            .row-fluid
-                .span9
-                    each message in messages
-                        .row
-                            .hero-unit("style"="margin:5px;padding:20px;")
-                                if message.photo
-                                    .row-fluid
-                                        .span10
-                                            p("style"="margin:0px 0px 0px 20px;")= message.text
-                                        .span2
-                                            .img-wrapper("style"="padding-right:20px;text-align:right;")
-                                                a("rel"="lightbox[imgs]", "href"="#{message.photo.largeurl}")
-                                                    img(src= message.photo.imageurl)
-                                else
-                                    .row
-                                        p("style"="margin:0px 0px 0px 20px;")= message.text
-                                .row
-                                    p("style"="text-align:right;font-size:10px;color:grey;")= message.created_at
-                .span3
-                    div("style"="margin-top:5px")
-                        include user_info
+        #loading-messages.well.modal.fade
+            .modal-body#loading-messages-modal-body
+                h1.text-center#oauth-indicator-text Loading exported messages...
+                .progress.progress-striped.active#loading-progress
+                    .bar#loading-progress-bar
+        #messages_content
