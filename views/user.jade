@@ -27,11 +27,32 @@ html
                    }
                    else */if(responseJSON.result == "completed")
                    {
-                       $("#div-for-export-user-messages").html("导出完成，<a class='btn btn-primary' href='/user/exported_messages'>打开</a>查看。");
+                       $("#div-for-export-user-messages").html("消息导出全部完成，<a class='btn btn-primary' href='/user/exported_messages'>打开</a>查看。");
                    }
-                   else if(responseJSON.result == "waiting" || responseJSON.result == "fetching")
+                   else if(responseJSON.result == "waiting")
                    {
-                       $("#div-for-export-user-messages").html("导出仍在进行，请耐心等待。导出成功后，您将收到一条私信通知。");
+                       if(responseJSON.waiting_queue_length)
+                       {
+                          $("#div-for-export-user-messages").html("您排在队列的第"+responseJSON.waiting_queue_length+"位，请耐心等待。");
+                       }
+                       else
+                       {
+                          $("#div-for-export-user-messages").html("您仍在队列中，我们会尽快为您完成，请耐心等待。");
+                       }
+                   }
+                   else if(responseJSON.result == "fetching")
+                   {
+                       console.log("responseJSON.fetched_message_length"+responseJSON.fetched_message_length);
+                       console.log("responseJSON.all_messages_count"+responseJSON.all_messages_count);
+                       if(responseJSON.fetched_message_length && responseJSON.all_messages_count)
+                       {
+                          var export_percent = responseJSON.fetched_message_length/responseJSON.all_messages_count*100;
+                          $("#div-for-export-user-messages").html("数据导出已完成"+parseInt(export_percent)+"%，请耐心等待。");  
+                       }
+                       else
+                       {
+                          $("#div-for-export-user-messages").html("导出仍在进行，请耐心等待。");
+                       }
                    }
                    else
                    {
@@ -41,7 +62,7 @@ html
                    //$("#div-for-export-user-messages").html(responseJSON.reason);
                    $("#btn-for-export-user-messages").click(function(){
                        $.ajax("/user/export_messages");
-                       $("#div-for-export-user-messages").html("导出正在进行，请耐心等待。导出成功后，您将收到一条私信通知。");
+                       $("#div-for-export-user-messages").html("导出正在进行，请耐心等待。");
                        });
                    });
                }); 
@@ -52,7 +73,7 @@ html
                 if locals.session.user
                     if locals.session.user.user_info
                         .span9
-                            #div-for-export-user-messages
+                            #div-for-export-user-messages("style"="width:300px;margin-left:auto;margin-right:auto;")
                             if messages
                                 each message in messages
                                     .row

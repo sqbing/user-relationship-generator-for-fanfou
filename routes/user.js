@@ -239,7 +239,16 @@ exports.export_messages_status = function(req, res)
                 responseJSON["result"] = "waiting";
                 responseJSON["reason"] = "Waiting in queue.";
                 // TODO 用户在队列中的位置
-                res.send(responseJSON);
+                redis_client.llen("export_waiting_queue", function(err, waiting_queue_length){
+                    if(err)
+                    {
+                        res.send(responseJSON);
+                        return;
+                    }
+                    responseJSON["waiting_queue_length"] = waiting_queue_length;
+                    res.send(responseJSON);
+                    return;
+                });
                 return;
             }
             else if(obj.export_status == "fetching")
@@ -247,8 +256,17 @@ exports.export_messages_status = function(req, res)
                 console.log(req.session.user.user_info.id+" in fetching messages.");
                 responseJSON["result"] = "fetching";
                 responseJSON["reason"] = "Export not completed.";
-                // TODO 抓取进度
-                res.send(responseJSON);
+                redis_client.llen("user_messages:"+req.session.user.user_info.id, function(err, fetched_message_length){
+                    if(err)
+                    {
+                        res.send(responseJSON);
+                        return;
+                    }
+                    responseJSON["fetched_message_length"] = fetched_message_length;
+                    responseJSON["all_messages_count"] = obj.statuses_count;
+                    res.send(responseJSON);
+                    return;
+                });
                 return;
             }
         }
@@ -354,6 +372,7 @@ exports.export_messages = function(req, res)
         // 将用户加入等待队列
         redis_client.hmset("user_info:"+req.session.user.user_info.id, 
                 "export_status", "waiting", 
+                "statuses_count", req.session.user.user_info.statuses_count,
                 "access_token", req.session.user.oauth_access_token, 
                 "access_secret", req.session.user.oauth_access_token_secret);
         redis_client.lpush("export_waiting_queue", req.session.user.user_info.id);
@@ -366,7 +385,7 @@ exports.export_messages = function(req, res)
 exports.fetch_map = function(req, res, next){
     if(req.session.user  == null|| req.session.user.oauth_access_token == null || req.session.user.oauth_access_token_secret == null)
     {
-        res.redirect("/oauth");
+        next();
         return;
     }
     if(req.session.user.following && req.session.user.followed)
@@ -402,7 +421,7 @@ exports.fetch_map = function(req, res, next){
                                     if(error){
                                         // Failed to get user info, reoauth.
                                         console.log("Failed to get user info, error:"+error);
-                                        res.redirect("/oauth");
+                                        next();
                                         return;
                                     }
                                     var user_info = JSON.parse(data);
@@ -441,8 +460,7 @@ exports.fetch_map = function(req, res, next){
                                 if(error){
                                     // Failed to get user info, reoauth.
                                     console.log("Failed to get user info, error:"+error+" response:"+response+" data:"+data);
-                                    res.send("Failed to get followed list.");
-                                    res.end();
+                                    next();
                                     return;
                                 }
                                 var followed_list = JSON.parse(data);
@@ -495,8 +513,7 @@ exports.fetch_map = function(req, res, next){
                                     if(error){
                                         // Failed to get user info, reoauth.
                                         console.log("Failed to get user info, error:"+error+" response:"+response+" data:"+data);
-                                        res.send("Failed to get following list.");
-                                        res.end();
+                                        next();
                                         return;
                                     }
                                     var following_list = JSON.parse(data);
@@ -561,74 +578,7 @@ exports.exported_messages = function(req, res, next)
     }
     // TODO
     res.render("exported_messages");
-
-
     return;
-    if(!config.redis.client)
-    {
-        console.log("Failed to show exported messages, redis not connected.");
-        //res.send("");
-        next();
-        return;
-    }
-    var redis_client = config.redis.client;
-    redis_client.hgetall("user_info:"+req.session.user.user_info.id, function(err, obj){
-        if(err)
-        {
-            console.log("Failed to show exported messages, redis return err."+err);
-            res.send("");
-            return;
-        }
-        if(obj)
-        {
-            if(obj.export_status == "completed")
-            {
-                // TODO
-                console.log("All messages exported.");
-                redis_client.llen("user_messages:"+req.session.user.user_info.id, function(err, messages_length){
-                    if(err)
-                    {
-                        console.log("Failed to get user_messages:"+req.session.user.user_info.id+" lenght");
-                        res.send("");
-                        return;
-                    }
-                    redis_client.lrange("user_messages:"+req.session.user.user_info.id, 0, messages_length-1, function(err, messages){
-                        if(err)
-                        {
-                            console.log("Failed to get user_messages:"+req.session.user.user_info.id+" all messages.");
-                            res.send("");
-                            return;
-                        }
-
-                        for(var message_index in messages)
-                        {
-                            messages[message_index] = JSON.parse(messages[message_index]);
-                            // 转换时间
-                            var new_date_string = "";
-                            var created_at = new Date(messages[message_index].created_at);
-                            new_date_string = created_at.getFullYear()+"年 "+created_at.getMonth()+"月 "+created_at.getDate()+"日 "+created_at.getHours()+":"+created_at.getMinutes()+":"+created_at.getSeconds();
-                            messages[message_index].created_at = new_date_string;
-                        }
-                        res.render("exported_messages", {"messages":messages});
-                        //res.send("Not implemented.");
-                        return;
-                    });
-                });
-            }
-            else
-            {
-                console.log("Messages not all exported.");
-                res.send("");
-                return;
-            }
-        }
-        else
-        {
-            console.log("Messages not all exported.");
-            res.send("");
-            return;
-        }
-    });
 };
 exports.user_info_span = function(req, res)
 {
