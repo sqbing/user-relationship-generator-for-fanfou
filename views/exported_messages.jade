@@ -9,6 +9,10 @@ html
         script(src="/javascripts/lightbox.js")
         script
             $(document).ready(function(){
+                if(!$(document.domain).selector.length)
+                {
+                    return;
+                }
                 $("#loading-messages").modal('show');
                 var page = 1;
                 var count = 20;
@@ -98,7 +102,7 @@ html
                                 messages.push(responseJSON.messages[index]);
                             }
                             var loading_percent = 100*messages.length/responseJSON.all_messages_count;
-                            console.log("messages at page: "+page+" fetched"+" percent: "+loading_percent+"%");
+                            //console.log("messages at page: "+page+" fetched"+" percent: "+loading_percent+"%");
                             $("#loading-progress-bar").css("width", loading_percent+"%");
                             // Update progress bar
                             fetch_export_messages(++page, count);
