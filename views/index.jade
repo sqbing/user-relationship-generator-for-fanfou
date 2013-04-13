@@ -68,7 +68,7 @@ html
                     else
                         .span3#span-for-oauth-button
                             a.btn.btn-primary.btn-large#oauth-button(data-toggle="modal", data-target="#oauth") 使用饭否账号登陆
-            #oauth.well.modal.fade
+            #oauth.well.modal.fade(style="display:none;")
                 .modal-body
                     h1.text-center#oauth-indicator-text Waiting...
                     .progress.progress-striped.active#oauth-progress

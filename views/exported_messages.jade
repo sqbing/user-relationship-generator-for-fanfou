@@ -119,7 +119,7 @@ html
             });
     body
         include header
-        #loading-messages.well.modal.fade
+        #loading-messages.well.modal.fade(style="display:none;")
             .modal-body#loading-messages-modal-body
                 h1.text-center#oauth-indicator-text Loading exported messages...
                 .progress.progress-striped.active#loading-progress
