@@ -1,7 +1,12 @@
 /**
  * Module dependencies.
  */
-
+var fs = require("fs");
+if(!fs.existsSync("./config.js")){
+    console.log("Config file not found. "+
+    "Try to rename config.js.example to config.js and run again.");
+    process.exit(1);
+}
 var redis = require("redis");
 var express = require('express')
   , routes = require('./routes')
@@ -76,7 +81,7 @@ if(config.redis.host && config.redis.port)
     });
 }
 routes(app);
-if(config.customer_key == null || config.customer_secret == null)
+if(config.customer_key === null || config.customer_secret === null)
 {
     console.log("customer_key or customer_secret null.");
     process.exit(1);
