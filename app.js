@@ -1,3 +1,4 @@
+require("coffee-script");
 // Check if config.js exists.
 var fs = require("fs");
 if(!fs.existsSync("./config.js")){
