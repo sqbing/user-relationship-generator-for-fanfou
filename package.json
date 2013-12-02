@@ -14,7 +14,8 @@
     "express": "3.1.0",
     "jade": "*",
     "oauth":"*",
-    "redis":"*"
-  }
+    "redis":"*",
+    "coffee-script":"*"
+  },
   "license":"BSD"
 }

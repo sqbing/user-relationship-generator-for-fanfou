@@ -1,0 +1,15 @@
+{
+  "name": "fanfou_api",
+  "version": "0.0.1",
+  "description": "Yet another javascript api library for fanfou.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": {
+      "name":"Rider Woo",
+      "email":"sqbing@gmail.com",
+      "url":"http://sqbing.github.com"
+  },
+  "license": "BSD"
+}

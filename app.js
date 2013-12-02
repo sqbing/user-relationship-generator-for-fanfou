@@ -1,6 +1,4 @@
-/**
- * Module dependencies.
- */
+// Check if config.js exists.
 var fs = require("fs");
 if(!fs.existsSync("./config.js")){
     console.log("Config file not found. "+
