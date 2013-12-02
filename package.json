@@ -5,18 +5,16 @@
   "scripts": {
     "start": "node app"
   },
-  "contributors":
-  [
-      {
-          "name":"Rider Woo",
-          "email":"sqbing@gmail.com",
-          "url":"http://sqbing.github.com"
-      }
-  ],
+  "author":{
+      "name":"Rider Woo",
+      "email":"sqbing@gmail.com",
+      "url":"http://sqbing.github.com"
+  },
   "dependencies": {
     "express": "3.1.0",
     "jade": "*",
     "oauth":"*",
     "redis":"*"
   }
+  "license":"BSD"
 }
