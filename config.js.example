@@ -4,10 +4,10 @@ module.exports = {
     "icon":"http://avatar1.fanfou.com/l0/00/8k/j0.jpg?1324963061",
     "server_domain":"127.0.0.1",
     "server_port":"3000",
+    "express_session_secret":"",
 
     "customer_key":"",
     "customer_secret":"",
-    "session_secret":"",
 
     "redis":{
         "hostname":"127.0.0.1",
