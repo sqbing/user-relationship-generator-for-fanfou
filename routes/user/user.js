@@ -76,12 +76,6 @@ exports.show = function(req, res, next){
     }
 };
 exports.info = function(req, res, next){
-    if(req.session.user == null || req.session.user.oauth_access_token == null || req.session.user.oauth_access_token_secret == null)
-    {
-        res.redirect("/oauth");
-        return;
-    }
-
     var config = req.global_config;
     var access_token = req.session.user.oauth_access_token;
     var access_secret = req.session.user.oauth_access_token_secret;

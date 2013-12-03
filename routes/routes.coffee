@@ -18,16 +18,20 @@ module.exports = (app) ->
     app.get("/oauth/callback", oauth.oauth_callback, index);
     app.get("/oauth/is_oauthed", oauth.is_oauthed);
     ###
+
     # show user info
     app.get("/user/info", auth.auth_filter, user.info, internal_server_error)
     # user sign out
-    app.get("/user/sign_out", auth.auth_filter, user.sign_out)
+    app.get("/user/sign_out", user.sign_out)
+
     # do oauth
     app.get('/auth/do_oauth', auth.do_oauth, internal_server_error)
     # oauth callback
     app.get('/auth/oauth_callback', auth.oauth_callback, internal_server_error)
+
     # show maintainer info
     app.get("/about", about.show)
+
     # server error related
     app.get("/500", internal_server_error)
     app.get("/404", not_found)

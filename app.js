@@ -25,11 +25,10 @@ app.configure(function(){
   app.use(express.bodyParser());
   app.use(express.methodOverride());
   app.use(express.cookieParser());
-  app.use(express.session(
-          {
-              secret:config.express_session_secret
-          })
-      );
+  app.use(express.session({
+              secret:config.express_session_secret,
+              cookie: { maxAge: 7*24*60*60*1000 }
+          }));
   app.use(function(req, res, next){
         req.global_config = config;
         res.locals.csrf = req.session?req.session._csrf:"";
@@ -65,7 +64,6 @@ if(config.redis.host && config.redis.port)
         if(config.redis.password)
         {
             config.redis.client.auth(config.redis.password, function(err){
-                // TODO auth callback function
                 console.log("Redis auth error: "+err);
             });
         }
