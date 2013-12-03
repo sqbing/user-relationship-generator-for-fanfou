@@ -2,6 +2,7 @@ var index = require("./index");
 var user = require("./user");
 var oauth = require("./oauth");
 var about = require("./about");
+var internal_server_error = require("./500");
 module.exports = function(app)
 {
     app.get('/', index);
@@ -22,4 +23,6 @@ module.exports = function(app)
     app.get("/oauth/is_oauthed", oauth.is_oauthed);
 
     app.get("/about", about.show);
+	
+	app.get("/500", internal_server_error);
 };

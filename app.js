@@ -27,7 +27,7 @@ app.configure(function(){
   app.use(express.cookieParser());
   app.use(express.session(
           {
-              secret:config.session_secret
+              secret:config.express_session_secret
           })
       );
   app.use(function(req, res, next){
