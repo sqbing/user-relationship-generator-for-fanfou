@@ -1,0 +1,10 @@
+!!! 5
+html
+    head
+    body
+        form
+            p username:
+                input(type="text", name="username")
+            p password:
+                input(type="password", name="password")
+            input(type="submit", value="submit", formaction="/auth/do_xauth", formmethod="post")

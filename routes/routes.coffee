@@ -28,6 +28,10 @@ module.exports = (app) ->
     app.get('/auth/do_oauth', auth.do_oauth, internal_server_error)
     # oauth callback
     app.get('/auth/oauth_callback', auth.oauth_callback, internal_server_error)
+    # do xauth
+    app.post('/auth/do_xauth', auth.do_xauth, internal_server_error)
+    # show xauth page
+    app.get('/auth/start_xauth', auth.start_xauth, internal_server_error)
 
     # show maintainer info
     app.get("/about", about.show)
